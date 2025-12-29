@@ -1,0 +1,39 @@
+// Create
+router.post("/", async (req, res) => {
+  // console.log("TEST REQ USER HERE");
+  // console.log(req.user);
+  // console.log("TEST REQ USER UID HERE");
+  // console.log(req.user.uid);
+  const userId = req.user.uid;
+  // console.log("REQ BODY HERE")
+  // console.log(req.body)
+  // console.log("REQ HERE")
+  // console.log(req)
+  const newItem = {...req.body, time: new Date(), ownerId: userId}
+  const result = await db.collection("messages").insertOne(newItem);
+  console.log("Posted!");
+  res.json(result);
+});
+
+
+
+router.post("/general", async (req, res) => {
+  try {
+    await db.collection("rooms").updateOne(
+      { _id: "general" },
+      { $addToSet: { users: { uid: req.user.uid } } }
+    );
+
+    await admin.firestore().collection("roomVault").doc("general").set({
+      users: admin.firestore.FieldValue.arrayUnion(req.user.uid)
+    }, { merge: true });
+
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to add user to general" });
+  }
+});
+
+
+
