@@ -34,68 +34,12 @@ app = FastAPI(lifespan=lifespan)
 model = SentenceTransformer("all-MiniLM-L6-v2")
 logging.basicConfig(level=logging.INFO)
 
-
-# Code snippet below is an api for embedding multiple messages
-# may have latency on cold starts
-
 class Cluster(BaseModel):
     label: int
-    centroid: List[float]
-    count: int
-    weight: float
-
-class EmbedRequest(BaseModel):
-    texts: List[str]
-    clusters: List[Cluster] | None = None
-
-# angle similarity between two points
-def cosine_similarity(a, b, bIsAlreadyNormalized = False):
-    a = np.array(a)
-    b = np.array(b)
-    if bIsAlreadyNormalized:
-        # know that this is still correct because np.linalg.norm(b) would return 1
-        return np.dot(a, b)/ (np.linalg.norm(a))
-    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
-
-@app.post("/embed")
-def getEmbedding(req: EmbedRequest):
-    # embeds texts
-    embeddings = model.encode(req.texts)
-
-    # umap transforms embeds
-    X = np.array(embeddings, dtype=np.float32)
-    umap3_coords = reducer3.transform(X)
-    umap5_coords = reducer5.transform(X)
-
-    # assigning embeds to pre-existing clusters if applicable
-    labels = []
-
-    for embed in embeddings:
-        # label = -1 signifies that it has no associated cluster
-        label = -1
-        bestSim = 0.0
-
-        # finds most similar cluster if applicable
-        if req.clusters:
-            for cluster in req.clusters:
-                sim = cosine_similarity(embed, cluster.centroid, True)
-                if sim > bestSim:
-                    bestSim = sim
-                    label = cluster.label
-
-        # if similarity is less than the neccesary then it doesnt apply
-        if bestSim < CLUSTER_SIMILARITY_NEEDED:
-            label = -1
-        
-        labels.append(label)
-
-    # returning proper json
-    return {
-        "embeddings" : embeddings.tolist(),
-        "umap3": umap3_coords.tolist(),
-        "umap5": umap5_coords.tolist(),
-        "labels": labels
-    }
+    centroid: List[float] | None = None
+    count: int | None = None
+    weight: float | None = None
+    lastUpdated: datetime | None = None
 
 class Message(BaseModel):
     label: int
@@ -103,53 +47,40 @@ class Message(BaseModel):
     time: datetime
     weight: float | None = None
 
-class LabelRequest(BaseModel):
+class EmbedRequest(BaseModel):
+    texts: List[str]
+    clusters: List[Cluster] | None = None
+
+class ClusterRequest(BaseModel):
     messages: List[Message]
     takenLabels: Set[int]
 
-@app.post("/cluster")
-def getLabels(req: LabelRequest):
+class ReweighRequest(BaseModel):
+    messages: List[Message] | None = None
+    clusters: List[Cluster] | None = None
 
-    # scans embeddings
-    X = np.array([m.embedding for m in req.messages], dtype=np.float32)
-    clusterer = hdbscan.HDBSCAN(
-        min_cluster_size = 2,
-        metric = 'euclidean'
-        )
-    labels = clusterer.fit_predict(X).tolist()
 
-    # remaps labels to global unique labels
-    taken = set(req.takenLabels)
-    labelMap = {}
-    for label in set(labels):
-        if label == -1:
-            continue
+# angle similarity between two points
+def cosine_similarity(a, b, bIsAlreadyNormalized = False):
+    a = np.array(a)
+    b = np.array(b)
+    if bIsAlreadyNormalized:
+        # this is still correct because np.linalg.norm(b) would return 1 since its already normalized
+        # calc 3 knowledge dump lol
+        return np.dot(a, b)/ (np.linalg.norm(a))
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
-        newLabel = label
-        while newLabel in taken:
-            newLabel += 1
-        labelMap[label] = newLabel
-        taken.add(newLabel)
-    
-    # assigns labels
-    for i, label in enumerate(labels):
-        if label == -1:
-            req.messages[i].label = -1
-        else:
-            req.messages[i].label = labelMap[label]
-        
-    # aggregates clusters
-    clusters : Dict[int, Cluster] = {}
+# generates clusters from message meta data
+def computeClusters(messages: List[Message]):
     now = datetime.now()
-    for msg in req.messages:
-        if msg.label == -1:
-            continue
+    clusters : Dict[int, Cluster] = {}
+    for msg in messages:
         ageInDays = (now - msg.time).total_seconds()/86400
         msg.weight = math.exp( -(DECAY_RATE) * ageInDays)
         if msg.label not in clusters:
             clusters[msg.label] = Cluster(
                 label = msg.label,
-                centroid = np.zeros(len(msg.embedding)),
+                centroid = np.zeros(len(msg.embedding), dtype=float),
                 count = 0,
                 weight = 0.0
             )
@@ -164,28 +95,135 @@ def getLabels(req: LabelRequest):
         norm = np.linalg.norm(cluster.centroid)
         if norm > 0: 
             cluster.centroid = (cluster.centroid)/(norm)
+        
+        # adds default values
+        cluster.lastUpdated = now
     
+    # returns clusters
+    return [c.model_dump() for c in clusters.values()]
+
+@app.post("/embed")
+def getEmbedding(req: EmbedRequest):
+    # embeds texts
+    embeddings = model.encode(req.texts)
+
+    # umap transforms embeds
+    X = np.array(embeddings, dtype=np.float32)
+    umap3_coords = reducer3.transform(X)
+    umap5_coords = reducer5.transform(X)
+
+    # assigning embeds to pre-existing clusters if applicable
+    labels = []
+    impactedClusters = {}
+    for embed in embeddings:
+        # label = -1 signifies that it has no associated cluster
+        label = -1
+        bestSim = 0.0
+
+        # finds most similar cluster if applicable
+        if req.clusters:
+            for cluster in req.clusters:
+                sim = cosine_similarity(embed, cluster.centroid, True)
+                if sim > bestSim:
+                    bestSim = sim
+                    label = cluster.label
+
+        # if similarity is less than the neccesary then it doesnt apply
+        if bestSim > CLUSTER_SIMILARITY_NEEDED:
+            # can use a defaultdict, if you want (same use case)
+            impactedClusters[label] = impactedClusters.get(label,0) + 1
+        else:
+            label = -1
+
+        labels.append(label)
+
+    # returning proper json
+    return {
+        "embeddings" : embeddings.tolist(),
+        "umap3": umap3_coords.tolist(),
+        "umap5": umap5_coords.tolist(),
+        "labels": labels,
+        "impactedClusters" : impactedClusters
+    }
+
+@app.post("/cluster")
+def getLabels(req: ClusterRequest):
+
+    # scans embeddings
+    X = np.array([m.embedding for m in req.messages], dtype=np.float32)
+    clusterer = hdbscan.HDBSCAN(
+        min_cluster_size = 2,
+        metric = 'euclidean'
+        )
+    labels = clusterer.fit_predict(X).tolist()
+    
+    # remaps labels to global unique labels
+    taken = set(req.takenLabels)
+    labelMap = {}
+    for label in set(labels):
+        if label == -1:
+            continue
+        newLabel = label
+        while newLabel in taken:
+            newLabel += 1
+        labelMap[label] = newLabel
+        taken.add(newLabel)
+    
+    # aggregates clusters and applies global labels
+    messages = []
+    globalLabels = []
+    for i, msg in enumerate(req.messages):
+        currentLabel = labels[i]
+        if currentLabel == -1:
+            globalLabels.append(-1)
+            continue
+        globalLabels.append(labelMap[currentLabel])  
+        msg.label = labelMap[currentLabel]
+        messages.append(msg)
+
+    clusters = computeClusters(messages)
+
     # returns proper json
     return {
-        "clusters" : [c.model_dump() for c in clusters.values()],
-        "messages": [m.model_dump() for m in req.messages],
+        "clusters" : clusters,
+        "globalLabels": globalLabels,
         "takenLabels": list(taken)
     }
 
+@app.post("/reweigh")
+def reweighClusters(req: ReweighRequest):
+    clusters: list[Cluster] = []
 
+    now = datetime.now()
+
+    # decaying existing clusters
+    if req.clusters:
+        for cluster in req.clusters:
+            if cluster.lastUpdated is None:
+                continue
+            ageInDays = (now - cluster.lastUpdated).total_seconds()/86400
+            cluster.weight *= (math.exp( -(DECAY_RATE) * ageInDays))
+            clusters.append(cluster)
+
+    # computing new clusters from messages
+    if req.messages:
+        newClusters = computeClusters(req.messages)
+        clusters.extend(newClusters)
+    
+    return {
+        "clusters" : [c.model_dump() for c in clusters]
+    }
 
 # for health checks and making sure the reducer is properly loaded on server starts
 
 @app.get("/health")
 def health():
-    if (reducer3 is None | reducer5 is None):
+    if (reducer3 is None or reducer5 is None):
         print("Failed Health Check!")
         return {"status": "loading"}, 503
     print("ML is locked and loaded!")
     print("Server is running on port 8000")
     return {"status": "ok"}, 200
-
-
 
 """""
 # Old UMAP, uncover if decide to only calculate 3D UMAPS per request, little traffic caused by it
