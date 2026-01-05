@@ -9,7 +9,7 @@ router.get("/UMAP/self", async (req,res) => {
   const userDoc = await db.collection("users").findOne({_id: userID});
   const embeddedArray = userDoc[embed];
   console.log(embeddedArray);
-  const result = embeddedArray
+  const result = embeddedArray;
   res.json(result);
 })
 

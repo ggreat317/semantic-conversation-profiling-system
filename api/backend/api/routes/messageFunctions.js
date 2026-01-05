@@ -168,11 +168,11 @@ export async function embeddingBatch(req, MESSAGE_BATCH_SIZE, EMBEDDED_BATCH_SIZ
 
 export async function maintenance(req, takenLabels, messagesSinceLastBatch, EMBEDDED_BATCH_SIZE, now){
   console.log("Attempting Maintenance")
-
-  //if( messagesSinceLastBatch < EMBEDDED_BATCH_SIZE ){
-  //  console.log("Not Enough Messages For Maintenance")
-  //  return { status: "skipped", reason: "no clusters to reweigh" };
-  //}
+  
+  if( messagesSinceLastBatch < EMBEDDED_BATCH_SIZE ){
+    console.log("Not Enough Messages For Maintenance")
+    return { status: "skipped", reason: "no clusters to reweigh" };
+  }
 
   await clusterUpdate(req, EMBEDDED_BATCH_SIZE)
   await clusterMake(req, takenLabels, EMBEDDED_BATCH_SIZE, now)
