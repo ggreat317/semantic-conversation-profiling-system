@@ -109,7 +109,11 @@ def getEmbedding(req: EmbedRequest):
 
     # umap transforms embeds
     X = np.array(embeddings, dtype=np.float32)
+
+    # pure visualization embedding
     umap3_coords = reducer3.transform(X)
+
+    # low-dimensionality embedding
     umap5_coords = reducer5.transform(X)
 
     # assigning embeds to pre-existing clusters if applicable

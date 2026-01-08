@@ -126,8 +126,8 @@ if (not((os.path.exists(UMAP3_PATH)) and (os.path.exists(UMAP5_PATH)))):
   print("embed complete")
 
 
-  fit_umap(all_embeddings, UMAP3_PATH)
-  fit_umap(all_embeddings, UMAP5_PATH)
+  fit_umap(all_embeddings, UMAP3_PATH, 3)
+  fit_umap(all_embeddings, UMAP5_PATH, 5)
   print("maps complete")
 
 

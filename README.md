@@ -37,7 +37,7 @@ To run the latest push locally:
  - go to "localhost:3000" (or whatever port npm run dev finds available)
 
 To use the latest push online:
- - understand that I temporarily took it down because when working on mongo indexes I need constantly delete old data to prevent caching error, may make another mongo cluster .... one for local dev and one for 24/7 deployment
+ - will be operational again in a week
  - go to "https://murmurs.web.app"
  - tell your friends, and their friends/family, to join you
  - be sure to spread the word, so I can getter better data to work with!

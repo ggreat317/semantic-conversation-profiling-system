@@ -22,6 +22,13 @@ router.get("/UMAP/others/:userID", async (req,res) =>{
     return res.status(404).json({error: "User Not Found!"});
   }
 
+  const umap = await db.collection("messages").find(
+    { ownerID: userID, processedForCluster: true },
+    {}
+  ).limit(512)
+
+  
+
   const embeddedArray = userDoc.embed;
 
   console.log("Attempting to fetch umap")
