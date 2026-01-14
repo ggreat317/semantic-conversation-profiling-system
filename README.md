@@ -3,7 +3,7 @@ A chat application with front end, back end, and ML properties.
 
 Meant to create user profiles based on clustered message embeddings and promote user interaction with the most similar users.
 
-First Week of January 2026 Updates
+Third Week of January 2026 Updates
 
 Already completed:
 - most of frontend
@@ -37,7 +37,7 @@ To run the latest push locally:
  - go to "localhost:3000" (or whatever port npm run dev finds available)
 
 To use the latest push online:
- - will be operational again in a week
+ - will be operational again by 27th
  - go to "https://murmurs.web.app"
  - tell your friends, and their friends/family, to join you
  - be sure to spread the word, so I can getter better data to work with!
