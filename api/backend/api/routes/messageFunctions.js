@@ -97,6 +97,15 @@ export async function embeddingBatch(req, MESSAGE_BATCH_SIZE, EMBEDDED_BATCH_SIZ
 
   console.log("Successfully posted embeddings to MongoDB");
 
+  console.log("Attempting to Reflect Embedding on User")
+
+  await db.collection("users").updateOne(
+    { uid: req.user.uid},
+    { $set: { messagesSinceLastEmbedBatch: 0 } }
+  )
+
+  console.log("Successfully Reflected Embedding on User")
+
   console.log("Attempting to mark impacted clusters")
 
   if (!embedData.impactedClusters || Object.keys(embedData.impactedClusters).length === 0){
@@ -166,15 +175,6 @@ export async function embeddingBatch(req, MESSAGE_BATCH_SIZE, EMBEDDED_BATCH_SIZ
   }));
   await db.collection("clusters").bulkWrite(clusterBatchUpdate);
 
-  console.log("Attempting to Reflect Embedding on User")
-
-  await db.collection("users").updateOne(
-    { uid: req.user.uid},
-    { $set: { messagesSinceLastEmbedBatch: 0 } }
-  )
-
-  console.log("Successfully Reflected Embedding on User")
-
   return { status: "complete", reason: "all updates successful" };
 }
 
@@ -218,7 +218,7 @@ async function clusterUpdate(req, EMBEDDED_BATCH_SIZE){
     { projection: { label: 1 } }
   ).toArray()
 
-  console.log("Sucessfully fetched clusters")
+  console.log("Successfully fetched clusters")
   
   console.log("Attempting to handle active clusters")
 
@@ -326,8 +326,6 @@ async function clusterMake(req, takenLabels, EMBEDDED_BATCH_SIZE, now, EMEDDING_
 
   if (clusterData.clusters && clusterData.clusters.length > 0){
 
-    console.log("clusters")
-    console.log(clusterData.clusters)
     const newClusterUpdate = clusterData.clusters.map(cluster =>({
       insertOne: {
         document: {
@@ -345,7 +343,7 @@ async function clusterMake(req, takenLabels, EMBEDDED_BATCH_SIZE, now, EMEDDING_
 
     await db.collection("clusters").bulkWrite(newClusterUpdate);
 
-    console.log("Successfully posted  clusters to MongoDB");
+    console.log("Successfully posted clusters to MongoDB");
   }else{
     console.log("No new Clusters to post to MongoDB");
   }
@@ -372,7 +370,7 @@ async function cleanup(req, LABEL_BATCH_SIZE, now){
     { ownerID: req.user.uid, processedForCluster: true, label: -1, time: { $gte: timeCutOff} }
   ).limit(LABEL_BATCH_SIZE).toArray()
 
-  if(!oldMessages || oldMessages.length == 0){
+  if(!oldMessages || oldMessages.length === 0){
     console.log("Skipped Clean Up : no old messages")
     return;
   }
@@ -381,7 +379,7 @@ async function cleanup(req, LABEL_BATCH_SIZE, now){
     { ownerID: req.user.uid }
   ).toArray()
 
-  if(!userClusters || userClusters.length == 0){
+  if(!userClusters || userClusters.length === 0){
     console.log("Skipped Clean Up : no clusters")
     return;
   }
@@ -393,6 +391,11 @@ async function cleanup(req, LABEL_BATCH_SIZE, now){
   })
   const cleanUpData = await cleanUpResponse.json()
   
+  if(!cleanUpData.clusters || cleanUpData.clusters.length === 0){
+    console.log("Clean Up Did Not Impact");
+    return;
+  }
+
   const cleanUpClusterBatchUpdate = cleanUpData.clusters.map((cluster) => ({
     updateOne: {
       filter: { ownerID: req.user.uid, label: Number(cluster.label) },

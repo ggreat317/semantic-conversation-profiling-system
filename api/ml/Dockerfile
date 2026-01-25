@@ -1,12 +1,12 @@
 # uses python image sourced from docker
-FROM python:3.10-slim
+FROM python:3.10-slim-bullseye
 
 # sets working dir
 WORKDIR /app
 
 # installs pytorch because the sentence embedder is based off it
-RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
 RUN apt-get update && apt-get install -y curl
+RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
 
 # copies python dependencies from txt file
 COPY requirements.txt .

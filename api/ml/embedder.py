@@ -9,6 +9,10 @@ from contextlib import asynccontextmanager
 from sentence_transformers import SentenceTransformer
 from umap_model import load_umap_model
 from datetime import datetime, timezone
+import asyncio
+
+# maxes current jobs at 2
+mlSemaphore = asyncio.Semaphore(1)
 
 DECAY_RATE = 0.11
 CLUSTER_SIMILARITY_NEEDED = .75
@@ -70,8 +74,6 @@ class MessagesClusters(BaseModel):
 
 # angle similarity between two points
 def cosine_similarity(a, b, bIsAlreadyNormalized = False):
-    a = np.array(a)
-    b = np.array(b)
     if bIsAlreadyNormalized:
         # this is still correct because np.linalg.norm(b) would return 1 since its already normalized
         # calc 3 knowledge dump lol
@@ -99,12 +101,15 @@ def computeClusters(messages: List[Message]):
 
     # normalizes clusters ( the weight part is to prevent unnecessary magnitude growth, its still the same angle)
     for cluster in clusters.values():
-        cluster.centroid = ((cluster.centroid)/(cluster.weight)).tolist()
+        cluster.centroid = cluster.centroid/cluster.weight
         norm = np.linalg.norm(cluster.centroid)
         if norm > 0: 
-            cluster.centroid = ((cluster.centroid)/(norm)).tolist()
+            cluster.centroid = cluster.centroid/norm
+        else:
+            cluster.centroid = np.zeros_like(cluster.centroid)
         
-        # adds default values
+        # default values
+        cluster.centroid = cluster.centroid.tolist()
         cluster.lastUpdated = now
     
     # returns clusters
@@ -151,16 +156,17 @@ def proximityAssign(embeddings: np.ndarray, clusters: List[Cluster] | None):
     }
 
 @app.post("/embed")
-def getEmbedding(req: TextsClusters):
-    # embeds texts
-    embeddings = model.encode(req.texts)
-    X = np.array(embeddings, dtype=np.float32)
+async def getEmbedding(req: TextsClusters):
+    async with mlSemaphore:
+        # embeds texts
+        embeddings = model.encode(req.texts)
+        X = np.array(embeddings, dtype=np.float32)
 
-    # pure visualization embedding
-    umap3_coords = reducer3.transform(X)
+        # pure visualization embedding
+        umap3_coords = reducer3.transform(X)
 
-    # low-dimensionality embedding
-    umap5_coords = reducer5.transform(X)
+        # low-dimensionality embedding
+        umap5_coords = reducer5.transform(X)
 
     result = proximityAssign(X, req.clusters)
 
@@ -174,19 +180,18 @@ def getEmbedding(req: TextsClusters):
     }
 
 @app.post("/cluster")
-def getLabels(req: MessagesLabels):
-
-    # scans embeddings
-    X = np.array([m.embedding for m in req.messages], dtype=np.float32)
-    if(len(X) <= 5):
-        labels = [-1]
-    else:
-        clusterer = hdbscan.HDBSCAN(
-            min_cluster_size = 5,
-            metric = 'euclidean'
-            )
-        labels = clusterer.fit_predict(X).tolist()
-
+async def getLabels(req: MessagesLabels):
+    async with mlSemaphore:
+        # scans embeddings
+        X = np.array([m.embedding for m in req.messages], dtype=np.float32)
+        if(len(X) < 2):
+            labels = [-1] * len(X)
+        else:
+            clusterer = hdbscan.HDBSCAN(
+                min_cluster_size = 2,
+                metric = 'euclidean'
+                )
+            labels = clusterer.fit_predict(X).tolist()
     # remaps labels to global unique labels
     taken = set(req.takenLabels) if req.takenLabels else set()
     labelMap = {}
@@ -244,7 +249,7 @@ def reweighClusters(req: MessagesClusters):
     }
 
 @app.post("/cleanup")
-def cleanUpClusters(req: MessagesClusters):
+async def cleanUpClusters(req: MessagesClusters):
     X = np.array([m.embedding for m in req.messages], dtype=np.float32)
     result = proximityAssign(X, req.clusters)
     return {
@@ -255,7 +260,7 @@ def cleanUpClusters(req: MessagesClusters):
 # for health checks and making sure the reducer is properly loaded on server starts
 
 @app.get("/health")
-def health():
+async def health():
     if (reducer3 is None or reducer5 is None):
         print("Failed Health Check!")
         return {"status": "loading"}, 503
