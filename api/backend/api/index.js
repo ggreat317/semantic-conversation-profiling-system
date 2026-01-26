@@ -2,7 +2,7 @@ import "dotenv/config";
 import cors from "cors";
 import express from "express";
 
-import { connectDB, db } from "./db.js";
+import { connectDB } from "./db.js";
 import { authenticate } from "./middleware/auth.js";
 
 import messagesRouter from "./routes/messages.js";
@@ -16,6 +16,7 @@ app.use(cors({
   origin: [
     "http://localhost:3000",
     "https://murmurs.web.app",
+    "https://murmurs.web.app/login",
     "https://murmurs.web.app/main",
     "https://murmurs.firebaseapp.com"
   ],
@@ -25,6 +26,7 @@ app.use(cors({
 
 app.use(express.json());
 
+
 await connectDB();
 
 app.use("/messages", authenticate, messagesRouter);
@@ -33,5 +35,9 @@ app.use("/friends", authenticate, friendsRouter);
 app.use("/account", accountRouter);
 app.use("/profiles", authenticate, profileRouter)
 
-const port = process.env.PORT || 5000;
-app.listen(port, () => console.log(`Server running on port ${port}`));
+const port = 5000;
+
+// dev --> app.listen(port, () => console.log(`Server running on port ${port}`));
+// prod --> app.listen(port, '0.0.0.0', () => console.log(`Server running on port ${port}`));
+
+app.listen(port, '0.0.0.0', () => console.log(`Server running on port ${port}`));
