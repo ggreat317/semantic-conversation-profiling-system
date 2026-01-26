@@ -5,7 +5,7 @@ import dynamic from "next/dynamic"
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false })
 import { useCss } from "../../homepage/useCss"
 
-export default function profileUMAP({ points }) {
+export default function profileUMAP({ points, self }) {
 
   if (!Array.isArray(points)){
     console.log("invalid points");
@@ -15,7 +15,11 @@ export default function profileUMAP({ points }) {
   const colors = useCss(["--button", "--text", "--time"])
 
   const clusters = Object.groupBy(points, p => p.label)
+  console.log("points")
+  console.log(points)
 
+  console.log("clusters")
+  console.log(clusters)
   const traces = Object.entries(clusters).map(([label, pts]) => ({
     x: pts.map(p => p.umap3[0]),
     y: pts.map(p => p.umap3[1]),
@@ -26,14 +30,19 @@ export default function profileUMAP({ points }) {
     marker: {
       size: label === "-1" ? 2 : 4,
       opacity: label === "-1" ? 0.3 : 0.85
-    }
+    },
+    //hoverinfo: "skip"
+    hovertemplate: self ? "%{text} <extra></extra>" : label === "-1" ? "Unassigned" : "Cluster %{text}" ,
+    text: self ? pts.map(p => wrapText(p.text)): pts.map(() => label) 
   }))
 
   return (
     <Plot
       data={traces}
       layout={{
+        autosize:true,
         scene: {
+          aspectmode: "cube",
           xaxis: { showticklabels: false },
           yaxis: { showticklabels: false },
           zaxis: { showticklabels: false }
@@ -51,8 +60,16 @@ export default function profileUMAP({ points }) {
         font: { color:  colors["--text"] },
       }}
       style={{ width: "90%", height: "90%" }}
+      useResizeHandler={true}
+      config={{ displayModeBar: false }}
     />
   )
+}
+
+// surprisingly learned some of this from my recent class in for unix environments
+function wrapText(text){
+  const regex = new RegExp(`(.{1,20})`, 'g');
+  return text.match(regex).join('<br>')
 }
 
 

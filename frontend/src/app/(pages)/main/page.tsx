@@ -62,7 +62,7 @@ export default function Main() {
     <div>
       {!loading && user && room &&
         <div className="Murmur">
-          <LeftSidebar></LeftSidebar>
+          <LeftSidebar user={user}></LeftSidebar>
           <Chat user={user} room={room}></Chat>
           <RightSidebar user={user} room={room} ></RightSidebar>
         </div>

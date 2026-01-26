@@ -59,9 +59,10 @@ export async function embeddingBatch(req, MESSAGE_BATCH_SIZE, EMBEDDED_BATCH_SIZ
 
   console.log("Attempting to post embeddings to MongoDB");
 
+  // grabs current clusters to see if any new messages belong in a cluster
+
   const userClusters = await db.collection("clusters").find(
     { ownerID: req.user.uid },
-    { projection: { label: 1, centroid: 1 } }
   ).toArray();
 
   const embedResponse = await fetch("http://ml:8000/embed", {
@@ -71,6 +72,8 @@ export async function embeddingBatch(req, MESSAGE_BATCH_SIZE, EMBEDDED_BATCH_SIZ
   });
   const embedData = await embedResponse.json();
 
+  // checks if they recieved feedback for every embedding
+  // this test should never fail
   if(
     embedData.embeddings.length !== messageBatch.length ||
     embedData.labels.length !== messageBatch.length
@@ -78,6 +81,7 @@ export async function embeddingBatch(req, MESSAGE_BATCH_SIZE, EMBEDDED_BATCH_SIZ
     throw new Error("embeddings return mismatch");
   }
 
+  // properly updates the mongo with the new message metadata
   const messageBatchUpdate = messageBatch.map((msg, i) => ({
     updateOne: {
       filter: { _id: msg._id },
@@ -108,11 +112,13 @@ export async function embeddingBatch(req, MESSAGE_BATCH_SIZE, EMBEDDED_BATCH_SIZ
 
   console.log("Attempting to mark impacted clusters")
 
+  // checks if any clusters got impacted by new messages
   if (!embedData.impactedClusters || Object.keys(embedData.impactedClusters).length === 0){
     console.log("No Clusters to Mark Impacted!")
     return { status: "skipped", reason: "no impacted clusters" };
   }
 
+  // tells the clusters that theyve been impacted and by how much
   const impactedClusters = embedData.impactedClusters
 
   const impactedClusterSetUpdate = Object.entries(impactedClusters).map(([label,value]) => ({
@@ -127,53 +133,7 @@ export async function embeddingBatch(req, MESSAGE_BATCH_SIZE, EMBEDDED_BATCH_SIZ
 
   console.log("Successfully updated impacted clusters in MongoDB");
   
-  console.log("Attempting to update impacted clusters")
-
-  const clustersNeedingUpdates = await db.collection("clusters").find(
-    { ownerID: req.user.uid, updatesPending: { $gte: EMBEDDED_BATCH_SIZE/5 } },
-    { projection: { label: 1 } }
-  ).toArray()
-  
-  if (clustersNeedingUpdates.length === 0){
-    console.log("No Impacted Clusters to Update")
-    return { status: "skipped", reason: "no clusters needing updates" };
-  }
-
-  const clusterInNeedLabels = clustersNeedingUpdates.map(c => c.label);
-
-  const messagesByLabel =  await db.collection("messages").aggregate([
-    { $match: { ownerID: req.user.uid, label: { $in: clusterInNeedLabels } } },
-    { $sort: { time: -1 }},
-    { $group: { _id: "$label", messages: { $push: "$$ROOT" } } },
-    { $project: { messages: { $slice: ["$messages", (EMBEDDED_BATCH_SIZE)] } } }
-  ]).toArray();
-
-  const messages = messagesByLabel.flatMap(c => c.messages)
-
-  const clusterResponse = await fetch("http://ml:8000/reweigh", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages })
-  })
-
-  const clusterData = await clusterResponse.json()
-  
-  const clusterBatchUpdate = clusterData.clusters.map((cluster) => ({
-    updateOne: {
-      filter: { ownerID: req.user.uid, label: Number(cluster.label) },
-      update: {
-        $set: {
-          centroid: cluster.centroid,
-          count: cluster.count,
-          weight: cluster.weight,
-          lastUpdated: now,
-          updatesPending: 0,
-          triggered: true
-        }
-      }
-    }
-  }));
-  await db.collection("clusters").bulkWrite(clusterBatchUpdate);
+  updateImpacted(req, EMBEDDED_BATCH_SIZE)
 
   return { status: "complete", reason: "all updates successful" };
 }
@@ -190,7 +150,7 @@ export async function maintenance(req, takenLabels, messagesSinceLastLabelBatch,
 
   await clusterUpdate(req, EMBEDDED_BATCH_SIZE);
   await clusterMake(req, takenLabels, EMBEDDED_BATCH_SIZE, now, EMEDDING_MULTIPLIER, LABEL_BATCH_MAX_SIZE );
-  await cleanup(req, LABEL_BATCH_MAX_SIZE, now)
+  await cleanup(req, LABEL_BATCH_MAX_SIZE, now, EMBEDDED_BATCH_SIZE);
 
   console.log("Maintenance Performed Successfully")
 
@@ -210,7 +170,6 @@ async function clusterUpdate(req, EMBEDDED_BATCH_SIZE){
 
   const staleClusters = await db.collection("clusters").find(
     { ownerID: req.user.uid, triggered: false, updatesPending: { $eq: 0 }},
-    { projection: { label: 1, weight: 1, lastUpdated: 1 } }
   ).toArray()
 
   const slowClusters = await db.collection("clusters").find(
@@ -261,7 +220,7 @@ async function clusterUpdate(req, EMBEDDED_BATCH_SIZE){
           centroid: cluster.centroid,
           count: cluster.count,
           weight: cluster.weight,
-          lastUpdated: now,
+          lastUpdated: cluster.lastUpdated,
           updatesPending: 0,
           triggered: false
         }
@@ -278,13 +237,24 @@ async function clusterUpdate(req, EMBEDDED_BATCH_SIZE){
 async function clusterMake(req, takenLabels, EMBEDDED_BATCH_SIZE, now, EMEDDING_MULTIPLIER, LABEL_BATCH_MAX_SIZE){
   console.log("Attempting to batch messages");
 
-  let embeddedBatch = await db.collection("messages").find({
-    ownerID: req.user.uid,
-    processedForEmbed: true,
-    processedForCluster: { $ne: true }
-  }).limit(LABEL_BATCH_MAX_SIZE).toArray();
+  let embeddedBatch;
 
-  if(embeddedBatch.length < EMBEDDED_BATCH_SIZE){
+  // if no clusters then it looks at past messages in addition to new messages
+  if (!takenLabels || takenLabels.length === 0){
+    embeddedBatch = await db.collection("messages").find({
+      ownerID: req.user.uid,
+      processedForEmbed: true,
+      label: -1
+    }).sort({ time: -1}).limit(LABEL_BATCH_MAX_SIZE).toArray();
+  } else {
+    embeddedBatch = await db.collection("messages").find({
+      ownerID: req.user.uid,
+      processedForEmbed: true,
+      processedForCluster: { $ne: true }
+    }).sort({ time: -1}).limit(LABEL_BATCH_MAX_SIZE).toArray();
+  }
+
+  if (embeddedBatch.length < EMBEDDED_BATCH_SIZE){
     console.log("Not Enough Messages to Batch!");
     return { status: "skipped", reason: "not enough embeddings to batch" };
   }
@@ -361,14 +331,14 @@ async function clusterMake(req, takenLabels, EMBEDDED_BATCH_SIZE, now, EMEDDING_
 }
 
 // grabs old processed unclustered embedded messages "old" and assigns them to clusters
-async function cleanup(req, LABEL_BATCH_SIZE, now){
+async function cleanup(req, LABEL_BATCH_SIZE, now, EMBEDDED_BATCH_SIZE){
   console.log("Attempting Cleanup");
 
   const timeCutOff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
   const oldMessages = await db.collection("messages").find(
     { ownerID: req.user.uid, processedForCluster: true, label: -1, time: { $gte: timeCutOff} }
-  ).limit(LABEL_BATCH_SIZE).toArray()
+  ).sort({ time: -1}).limit(LABEL_BATCH_SIZE).toArray()
 
   if(!oldMessages || oldMessages.length === 0){
     console.log("Skipped Clean Up : no old messages")
@@ -390,26 +360,23 @@ async function cleanup(req, LABEL_BATCH_SIZE, now){
     body: JSON.stringify({ messages: oldMessages, clusters: userClusters})
   })
   const cleanUpData = await cleanUpResponse.json()
-  
-  if(!cleanUpData.clusters || cleanUpData.clusters.length === 0){
-    console.log("Clean Up Did Not Impact");
-    return;
+
+  if (!cleanUpData.impactedClusters || Object.keys(cleanUpData.impactedClusters).length === 0){
+    console.log("Clean Up Had No Clusters to Mark Impacted!")
+    return { status: "skipped", reason: "no impacted clusters" };
   }
 
-  const cleanUpClusterBatchUpdate = cleanUpData.clusters.map((cluster) => ({
+  const impactedClusters = cleanUpData.impactedClusters
+
+  const impactedClusterSetUpdate = Object.entries(impactedClusters).map(([label,value]) => ({
     updateOne: {
-      filter: { ownerID: req.user.uid, label: Number(cluster.label) },
+      filter: { ownerID: req.user.uid, label: Number(label) },
       update: {
-        $set: {
-          centroid: cluster.centroid,
-          count: cluster.count,
-          weight: cluster.weight,
-        }
+        $inc: { updatesPending: value || 0}
       }
     }
   }));
-
-  await db.collection("clusters").bulkWrite(cleanUpClusterBatchUpdate);
+  await db.collection("clusters").bulkWrite(impactedClusterSetUpdate);
 
   const cleanUpLabelBatchUpdate = oldMessages.map((msg, i) => ({
     updateOne: {
@@ -424,5 +391,59 @@ async function cleanup(req, LABEL_BATCH_SIZE, now){
 
   await db.collection("messages").bulkWrite(cleanUpLabelBatchUpdate);
 
+  updateImpacted(req, EMBEDDED_BATCH_SIZE);
+
   console.log("Successfully Cleaned up");
+}
+
+async function updateImpacted(req, EMBEDDED_BATCH_SIZE){
+  console.log("Attempting to update impacted clusters");
+  // checks if a cluster has enough impactes to be sucessfully reweighed
+  const clustersNeedingUpdates = await db.collection("clusters").find(
+    { ownerID: req.user.uid, updatesPending: { $gte: EMBEDDED_BATCH_SIZE/5 } },
+    { projection: { label: 1 } }
+  ).toArray();
+  
+  if (clustersNeedingUpdates.length === 0){
+    console.log("No Impacted Clusters to Update");
+    return { status: "skipped", reason: "no clusters needing updates" };
+  }
+
+  const clusterInNeedLabels = clustersNeedingUpdates.map(c => c.label);
+  // grabs recent messages belonging to that cluster
+  const messagesByLabel =  await db.collection("messages").aggregate([
+    { $match: { ownerID: req.user.uid, label: { $in: clusterInNeedLabels } } },
+    { $sort: { time: -1 }},
+    { $group: { _id: "$label", messages: { $push: "$$ROOT" } } },
+    { $project: { messages: { $slice: ["$messages", (EMBEDDED_BATCH_SIZE)] } } }
+  ]).toArray();
+
+  const messages = messagesByLabel.flatMap(c => c.messages);
+
+  const clusterResponse = await fetch("http://ml:8000/reweigh", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages })
+  });
+
+  const clusterData = await clusterResponse.json();
+  
+  const clusterBatchUpdate = clusterData.clusters.map((cluster) => ({
+    updateOne: {
+      filter: { ownerID: req.user.uid, label: Number(cluster.label) },
+      update: {
+        $set: {
+          centroid: cluster.centroid,
+          count: cluster.count,
+          weight: cluster.weight,
+          lastUpdated: now,
+          updatesPending: 0,
+          triggered: true
+        }
+      }
+    }
+  }));
+  await db.collection("clusters").bulkWrite(clusterBatchUpdate);
+
+  console.log("Successfully updated impacted clusters");
 }

@@ -73,11 +73,7 @@ class MessagesClusters(BaseModel):
 
 
 # angle similarity between two points
-def cosine_similarity(a, b, bIsAlreadyNormalized = False):
-    if bIsAlreadyNormalized:
-        # this is still correct because np.linalg.norm(b) would return 1 since its already normalized
-        # calc 3 knowledge dump lol
-        return np.dot(a, b)/ (np.linalg.norm(a))
+def cosine_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 # generates clusters from message meta data
@@ -113,7 +109,7 @@ def computeClusters(messages: List[Message]):
         cluster.lastUpdated = now
     
     # returns clusters
-    return [c.model_dump() for c in clusters.values()]
+    return list(clusters.values())
 
 # REMEMBER
 # REMEMBER try to vectorize or make an effective C hot function later
@@ -125,7 +121,7 @@ def proximityAssign(embeddings: np.ndarray, clusters: List[Cluster] | None):
         return {
         "labels": [-1] * len(embeddings),
         "impactedClusters" : {}
-     }
+    }
     
     # assigning embeds to pre-existing clusters if applicable
     labels = []
@@ -133,11 +129,11 @@ def proximityAssign(embeddings: np.ndarray, clusters: List[Cluster] | None):
     for embed in embeddings:
         # label = -1 signifies that it has no associated cluster
         label = -1
-        bestSim = 0.0
+        bestSim = -1.0
 
         # finds most similar cluster if applicable
         for cluster in clusters:
-            sim = cosine_similarity(embed, cluster.centroid, True)
+            sim = cosine_similarity(embed, cluster.centroid)
             if sim > bestSim:
                 bestSim = sim
                 label = cluster.label
@@ -219,7 +215,7 @@ async def getLabels(req: MessagesLabels):
     clusters = computeClusters(messages)
     # returns proper json
     return {
-        "clusters" : clusters,
+        "clusters" : [c.model_dump() for c in clusters],
         "globalLabels": globalLabels,
         "takenLabels": list(taken)
     }
@@ -228,7 +224,7 @@ async def getLabels(req: MessagesLabels):
 def reweighClusters(req: MessagesClusters):
     clusters: list[Cluster] = []
 
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
 
     # decaying existing clusters
     if req.clusters:

@@ -1,22 +1,27 @@
 import express from "express";
 import { db } from "../db.js";
-import { ObjectId } from "mongodb";
 
 const router = express.Router();
 
 router.get("/UMAP/self", async (req, res) => {
   // grabs UMAPed message meta data of the requester with text
   const result = await db.collection("messages").aggregate([
-    { ownerID: req.user.uid, processedForCluster: true },
-      {
-        $project: {
-          _id: 1,
-          label: 1,
-          umap3: 1,
-          text: 1
-        }
+    { 
+      $match: {
+        ownerID: req.user.uid, 
+        processedForCluster: true 
       }
-  ]).limit(512).toArray();
+    }
+    ,
+    {
+      $project: {
+        _id: 1,
+        label: 1,
+        umap3: 1,
+        text: 1
+      }
+    },
+  ]).limit(512).toArray()
 
   // sends the UMAPed meta data
   res.json(result);

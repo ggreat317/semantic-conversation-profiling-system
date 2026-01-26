@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../homepage/auth';
+import { User } from 'firebase/auth';
 import { loadRooms } from '../api/selfGet';
 
 import { DefaultBar } from './default';
@@ -35,8 +35,6 @@ const DARK_THEME: Theme = {
 
 export type Setter = React.Dispatch<React.SetStateAction<string>>;
 
-
-
 export type Room = {
   _id: string;
   name: string;
@@ -48,15 +46,14 @@ export type Room = {
   }[]
 };
 
-export function LeftSidebar() {
+export function LeftSidebar({ user } : {user: User}) {
 
 	const [sidebar, setSidebar] = useState("");
 	const [custom, setCustom ] = useState("");
 	const [customTheme, setCustomTheme] = useState<Theme>(DARK_THEME)
 
-  const { user } = useAuth();
   const [ rooms, setRooms ] = useState<Room[]>([]);
-
+  
   useEffect(() => {
     if (!user) return;
 
@@ -93,11 +90,10 @@ export function LeftSidebar() {
   const groupChats = rooms
     .filter(room => room.type === "G")
     .sort(sortByLastAccessed);
-    
 
 	return (
 		<div>
-			{sidebar === "" && <DefaultBar setSidebar={setSidebar} directMessages={directMessages} groupChats={groupChats}></DefaultBar>}
+			{sidebar === "" && <DefaultBar setSidebar={setSidebar} directMessages={directMessages} groupChats={groupChats} user={user}></DefaultBar>}
 			{sidebar === "settings" && <SettingBar setSidebar={setSidebar}></SettingBar>}
 			{sidebar === "options" && <OptionBar setSidebar={setSidebar} setCustom={setCustom} setCustomTheme={setCustomTheme}></OptionBar>}
 			{sidebar === "sliders" && <SliderBar setSidebar={setSidebar} custom={custom} customTheme={customTheme}></SliderBar>}

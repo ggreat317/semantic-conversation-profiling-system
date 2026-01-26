@@ -24,7 +24,8 @@
 }
 
 .tabs{
-  overflow-y: scroll;
+  display: flex;
+  flex-direction: column;
 }
 
 .tabs::-webkit-scrollbar{
@@ -41,6 +42,25 @@
   margin-top: auto;
 }
 
+.menuProfile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--text);
+  border: none;
+  border-radius: 8px;
+  padding: 0px 0px;
+  font-weight: bold;
+  opacity: 1;
+  width:97%;
+  margin-top: 5px;
+  background: var(--button);
+  overflow: hidden;
+}
+
+.menuProfile.open{
+  min-height: 50vh;
+}
 
 .menu-input{
   background-color: rgb(82, 82, 82);
@@ -109,4 +129,18 @@
 .customMode-save{
   height:2vh;
   background-color: black;
+}
+
+.slide{
+  overflow-y: scroll;
+}
+
+.slide::-webkit-scrollbar{
+  background: transparent;
+  width: 3px;
+}
+
+.slide::-webkit-scrollbar-thumb{
+  border-radius: 10px;
+  background: rgba(0,0,0,0.15);
 }

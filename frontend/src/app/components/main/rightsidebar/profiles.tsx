@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { sendFriendRequest } from '../api/request';
-import { loadOtherUMAP } from '../api/profiles';
+import { loadOtherUMAP, loadSelfUMAP } from '../api/profiles';
 import ProfileUMAP from './profileUMAP';
 import { User } from 'firebase/auth';
 
@@ -62,13 +62,14 @@ export function Profiles({user, room} : {user : User, room : string}) {
           key={u.userID}
           userID={u.userID}
           userName={u.userName}
+          self={false}
         />
       ))}
     </div>
   );
 }
 
-function ProfileRow({ userID, userName }: {userID: string; userName: string;}) {
+export function ProfileRow({ userID, userName, self }: {userID: string, userName: string, self: boolean}) {
 
   const [open, setOpen] = useState(false);
   const [points, setPoints] = useState<number[][]>([])
@@ -82,7 +83,7 @@ function ProfileRow({ userID, userName }: {userID: string; userName: string;}) {
     setLoading(true);
     try{
       console.log("im trying to load the umap");
-      const coords = await loadOtherUMAP(userID);
+      const coords = self ? await loadSelfUMAP() : await loadOtherUMAP(userID)
       setPoints(coords);
       console.log("pass")
     }catch{
@@ -98,21 +99,27 @@ function ProfileRow({ userID, userName }: {userID: string; userName: string;}) {
   }
 
   return (
-    <div className={`profile ${open ? "open" : ""}`}>
-      <button className="userinfo" onClick={handleToggle}>
-        <div className="pfp">{userName.slice(0, 2)}</div>
-        <div className="usernameHolder">
-          <div className="username">{userName}</div>
-        </div>
-      </button>
+    <div className={`${self ? "menuProfile" : "profile"} ${open ? "open" : ""}`}>
+      {self ? 
+        <button className="button" onClick={handleToggle}>
+            Profile
+        </button>
+      :
+        <button className="userinfo" onClick={handleToggle}>
+          <div className="pfp">{userName.slice(0, 2)}</div>
+          <div className="usernameHolder">
+            <div className="username">{userName}</div>
+          </div>
+        </button>
+      }
 
       {open && (
         <div className="aboutme">
-            {loading && <div>Loading...</div>}
-            {!loading && points.length!=0 && <ProfileUMAP points={points}></ProfileUMAP>}
+            {!loading && points.length!=0 && <ProfileUMAP points={points} self={self}></ProfileUMAP>}
           <div>
+            {loading && <div>Loading...</div>}
             {!loading && points.length==0 && <div>Not Enough Messsages for Profile Display</div>}
-            <FriendButton recipientID={userID} />
+            {!self && <FriendButton recipientID={userID} />}
           </div>
         </div>
       )}
