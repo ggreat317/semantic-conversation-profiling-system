@@ -29,6 +29,10 @@ app.use(express.json());
 
 await connectDB();
 
+app.get('/', (req, res) => {
+  res.send('API is working!');
+});
+
 app.use("/messages", authenticate, messagesRouter);
 app.use("/user", authenticate, userRouter);
 app.use("/friends", authenticate, friendsRouter);
@@ -40,4 +44,6 @@ const port = 5000;
 // dev --> app.listen(port, () => console.log(`Server running on port ${port}`));
 // prod --> app.listen(port, '0.0.0.0', () => console.log(`Server running on port ${port}`));
 
-app.listen(port, '0.0.0.0', () => console.log(`Server running on port ${port}`));
+// app.listen(port, '0.0.0.0', () => console.log(`Server running on port ${port}`));
+
+app.listen(port, () => console.log(`Server running on port ${port}`));
