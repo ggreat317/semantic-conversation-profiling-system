@@ -120,23 +120,25 @@ router.get("/", async (req, res) => {
   })));
 });
 
-// Update
-router.put("/:id", async (req, res) => {
-  const { id } = req.params;
-  const result = await db.collection("messages").updateOne(
-    { _id: new ObjectId(id) },
-    { $set: req.body }
-  );
-  console.log("Updated!");
-  res.json(result);
-});
+// not implementing just yet, needs some more "supervision"
+// 
+//
+// router.put("/:id", async (req, res) => {
+//   const { id } = req.params;
+//   const result = await db.collection("messages").updateOne(
+//     { _id: new ObjectId(id) },
+//     { $set: req.body }
+//   );
+//   console.log("Updated!");
+//   res.json(result);
+// });
 
-// Delete
-router.delete("/:id", async (req, res) => {
-  const { id } = req.params;
-  const result = await db.collection("messages").deleteOne({ _id: new ObjectId(id) });
-  console.log("Deleted!");
-  res.json(result);
-});
+// 
+// router.delete("/:id", async (req, res) => {
+//   const { id } = req.params;
+//   const result = await db.collection("messages").deleteOne({ _id: new ObjectId(id) });
+//   console.log("Deleted!");
+//   res.json(result);
+// });
 
 export default router;

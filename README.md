@@ -1,9 +1,9 @@
 # semantic-conversation-profiling-system
 
 # Simple Description
-A chat application with front end, back end, and ML properties. 
+An online chat application with front end, back end, and ML properties. 
 
-Meant to create user profiles based on clustered message embeddings and promote user interaction with the most similar users.
+Meant to create user profiles based on clustered message embeddings and promotes user interaction with the similar cluster profiles.
 
 # Fourth Week of January 2026 Updates
 
@@ -12,23 +12,28 @@ Already completed:
 - pipelined embeddings, cluster creation, and low dimensionality proj.
 - data wiring/schemas in mongo, firebase firestore, and firebase RTDB
 - deploying dockerized central expressjs api's and ml pipelines on fast api and hosting frontend on public firebase 
-- centroid aggregation and cool cluster maintenance
+- time-decayed centroid aggregation (like weighing the importance of clusters), cluster maintenance (since clusters evolve), and "ramp up" batch ingestion pipelines 
 - lots of batching and other fun optimizations (no c hot functions or optimized numpy matrix multiplications just yet)
 - aws lighthouse backend API server and https for remote usage
 - some other stuff I likely forgot
 
-Currently working on (from most to least focused):
-- finding bugs
+Currently working on (prioritized and will likely be done by 2/14):
+- finding foundational bugs
 - user to user matching via FAISS
 - getting more user messages in messageVault for better low-dimensional proj.
 - using a dataset of genres for reverse embedding cluster centroids (would replace default {Cluster 0, Cluster 1, ... , Cluster n} names and likely lead to improved FAISS implementation)
-- few other nuances
 
-Planning to work on:
+Planning to work on (not prioritized but wanted done by 3/1):
 - mult-line messages/inputs and better UI
-- vectorized or hot c functions
-- theme change or custom background stickers
-- model for user interactions < --- needs more user interactions to train on
+- vectorized or hot c functions (optimizes python scripts)
+- custom background stickers (allows for cool looking setups)
+- theme change (thinking of changing the entire theme, but i like the potential of a default environment, for customizing it to your liking)
+- ci/cd pipeline (currently manually going into server and pushing updates since its in prod mode and not dev mode, so its easier)
+- finding more bugs (the eternal strive to removing weaknesses)
+- adding cool stuff (the eternal strive to implement strengths)
+
+Hope To Work On:
+- model for user interactions < --- needs user interactions to train on
 
 # Remote Usage
 To use the latest push online:
