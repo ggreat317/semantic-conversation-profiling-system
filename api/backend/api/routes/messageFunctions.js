@@ -13,6 +13,10 @@ export async function MongoDBUploadMessage(req, messageID, now){
     processedForCluster: false
   });
 
+  await db.collection("messageVault").insertOne({
+    _id: messageID,
+    text: req.body.text,
+  });
   
   await db.collection("rooms").updateOne(
     { _id: req.body.room },
