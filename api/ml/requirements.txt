@@ -5,8 +5,8 @@ scikit-learn
 joblib
 hdbscan
 faiss-cpu
-fastapi        # Optional if you want to serve ML via HTTP
-uvicorn        # Optional for FastAPI server
+fastapi
+uvicorn
 umap-learn
 asyncio
 

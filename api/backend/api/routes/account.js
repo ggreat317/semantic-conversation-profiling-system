@@ -49,6 +49,7 @@ router.post("/", limiter, async (req, res) => {
       embeddedBatchLimit: 1,
       messagesSinceLastLabelBatch: 0,
       messagesSinceLastEmbedBatch: 0,
+      bestMatch: ""
     });
 
     await db.collection("rooms").updateOne(

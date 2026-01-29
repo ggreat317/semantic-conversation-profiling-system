@@ -144,8 +144,9 @@ export async function embeddingBatch(req, MESSAGE_BATCH_SIZE, EMBEDDED_BATCH_SIZ
 
 // runs maintenance
 export async function maintenance(req, takenLabels, messagesSinceLastLabelBatch, EMBEDDED_BATCH_SIZE, now, EMEDDING_MULTIPLIER, LABEL_BATCH_MAX_SIZE ){
-  
+
   console.log("Attempting Regular Maintenance");
+  await profileMatch(req);
   
   if( messagesSinceLastLabelBatch < EMBEDDED_BATCH_SIZE ){
     console.log("Not Enough Messages For Maintenance");
@@ -450,4 +451,37 @@ async function updateImpacted(req, EMBEDDED_BATCH_SIZE){
   await db.collection("clusters").bulkWrite(clusterBatchUpdate);
 
   console.log("Successfully updated impacted clusters");
+}
+
+async function profileMatch(req){
+  console.log("Attempting to find best match");
+
+  const userClusters = await db.collection("clusters").find({ ownerID: req.user.uid }).toArray();
+  const compareClusters = await db.collection("clusters").find({ ownerID: { $ne : req.user.uid } }).toArray();
+
+  if(!userClusters || userClusters.length === 0){
+    console.log("Skipped Matching: no user clusters")
+    return;
+  }
+
+  if(!compareClusters || compareClusters.length === 0){
+    console.log("Skipped Matching : no comparable clusters")
+    return;
+  }
+
+  const profileResponse = await fetch("http://ml:8000/profile", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user: userClusters, compare: compareClusters }),
+  });
+  const profileData = await profileResponse.json();
+
+  console.log(profileData.bestMatch)
+
+  await db.collection("users").updateOne(
+    { uid : req.user.uid },
+    { $set: { bestMatch : profileData.bestMatch } }
+  )
+
+  console.log("Found the best match");
 }

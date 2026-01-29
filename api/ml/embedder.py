@@ -1,5 +1,4 @@
 import math
-import logging
 import hdbscan
 import numpy as np
 from typing import List, Set, Dict
@@ -10,9 +9,13 @@ from sentence_transformers import SentenceTransformer
 from umap_model import load_umap_model
 from datetime import datetime, timezone
 import asyncio
+import faiss
 
-# maxes current jobs at 2
+# maxes current jobs at 1
 mlSemaphore = asyncio.Semaphore(1)
+
+# default from encoder
+DIMENSIONS = 384
 
 DECAY_RATE = 0.11
 CLUSTER_SIMILARITY_NEEDED = .75
@@ -44,7 +47,6 @@ print("load up embedder env")
 
 app = FastAPI(lifespan=lifespan)
 model = SentenceTransformer("all-MiniLM-L6-v2")
-logging.basicConfig(level=logging.INFO)
 
 class Cluster(BaseModel):
     label: int
@@ -52,6 +54,14 @@ class Cluster(BaseModel):
     count: int | None = None
     weight: float | None = None
     lastUpdated: datetime | None = None
+
+class ClusterWithId(BaseModel):
+    ownerID: str
+    label: int
+    centroid: List[float]
+    count: int
+    weight: float
+    lastUpdated: datetime
 
 class Message(BaseModel):
     label: int
@@ -71,6 +81,9 @@ class MessagesClusters(BaseModel):
     messages: List[Message] | None = None
     clusters: List[Cluster] | None = None
 
+class ClustersClusters(BaseModel):
+    user: List[Cluster]
+    compare: List[ClusterWithId]
 
 # angle similarity between two points
 def cosine_similarity(a, b):
@@ -251,6 +264,60 @@ async def cleanUpClusters(req: MessagesClusters):
     return {
         "labels": result["labels"],
         "impactedClusters" : result["impactedClusters"]  
+    }
+
+
+@app.post("/profile")
+async def profile(req: ClustersClusters):
+    async with mlSemaphore:
+        # WARNING WARNING WARNING, ALL THIS RELIES ON UNMUTATED INDEX
+        # DO NOT CHANGE INDEX IN PROCESS OR INIT DICTS INSTEAD OF ARRAYS
+        # normalizes the centroids of the clusters set for comparison
+        compareCentroids = np.array([c.centroid for c in req.compare], dtype=np.float32)
+        faiss.normalize_L2(compareCentroids)
+
+        # maps strings ids to ints
+        # this method is likely inefficient am tired will fix later 
+        # it works tho
+
+        # use if mutating index, it returns vectors as given so no need right now
+        # compareIDs = [c.id for c in req.compare]
+        # str2int = {s: i for i, s in enumerate(compareIDs)}
+        # int2str = {i: s for s, i in str2int.items()}
+        # ids = np.array([str2int[s] for s in compareIDs], dtype=np.int64)
+        # inits index and adds normalized centroids for later comparison
+        # index = faiss.IndexFlatIP(DIMENSIONS)
+        # index = faiss.IndexIDMap(index)
+        # index.add_with_ids(compareCentroids, ids)
+
+        index = faiss.IndexFlatIP(DIMENSIONS)
+        index.add(compareCentroids)
+
+        # compares then aggregates each centroid comparison from the user
+        user = np.array([c.centroid for c in req.user], dtype='float32')
+        faiss.normalize_L2(user)
+        D, I = index.search(user, k=2)
+    
+    userWeights = np.array([c.weight for c in req.user], dtype='float32')
+    
+    compareWeightsScoped = np.array([req.compare[i].weight for i in I.ravel()], dtype='float32')
+    compareWeightsMatrix = compareWeightsScoped.reshape(D.shape)
+
+    DWeighted = D * userWeights[:, None] * compareWeightsMatrix
+
+    idMap = {i: c.ownerID for i,c in enumerate(req.compare)}
+    ids = np.vectorize(idMap.get)(I)
+
+    uniqueIds = np.unique(ids)
+    uidMap = {uid: i for i, uid in enumerate(uniqueIds)}
+    uids = np.vectorize(uidMap.get)(ids)
+
+    scores = np.zeros(uids.max()+1, dtype=np.float32)
+    np.add.at(scores, uids.ravel(), DWeighted.ravel())
+
+    bestMatch = uniqueIds[scores.argmax()]
+    return {
+        "bestMatch" : bestMatch
     }
 
 # for health checks and making sure the reducer is properly loaded on server starts

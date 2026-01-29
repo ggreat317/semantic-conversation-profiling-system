@@ -15,11 +15,12 @@ Already completed:
 - time-decayed centroid aggregation (like weighing the importance of clusters), cluster maintenance (since clusters evolve), and "ramp up" batch ingestion pipelines 
 - lots of batching and other fun optimizations (no c hot functions or optimized numpy matrix multiplications just yet)
 - aws lighthouse backend API server and https for remote usage
+- user to user matching via FAISS
 - some other stuff I likely forgot
 
 Currently working on (prioritized and will likely be done by 2/14):
 - finding foundational bugs
-- user to user matching via FAISS
+- normalizing user cluster time-weights
 - getting more user messages in messageVault for better low-dimensional proj.
 - using a dataset of genres for reverse embedding cluster centroids (would replace default {Cluster 0, Cluster 1, ... , Cluster n} names and likely lead to improved FAISS implementation)
 
