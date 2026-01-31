@@ -1,9 +1,12 @@
 # semantic-conversation-profiling-system
 
-# Simple Description
-An online chat application with front end, back end, and ML properties. 
+# Description
+Simple. An online chat application with front end, back end, and ML properties. 
 
-Meant to create user profiles based on clustered message embeddings and promotes user interaction with the similar cluster profiles.
+Less Simple. Creates evolving user cluster profiles based on clustered message embeddings and promotes user interaction with similar cluster profiles.
+
+Least Simple. A user profiling and reccomendation system based on batch ingested embeddings, time-decayed clusters, aggregated cluster profiles, low-dimensionality projections, and cluster-cluster similarity, integrated though a fully deployed user messaging application, backed by authentication and utilizing three databases, in order to promote user interaction with people whose cluster profiles most resemble eachothers, e.g. they talk about the same stuff.
+
 
 # Fourth Week of January 2026 Updates
 
@@ -13,12 +16,11 @@ Already completed:
 - data wiring/schemas in mongo, firebase firestore, and firebase RTDB
 - deploying dockerized central expressjs api's and ml pipelines on fast api and hosting frontend on public firebase 
 - time-decayed centroid aggregation (like weighing the importance of clusters), cluster maintenance (since clusters evolve), and "ramp up" batch ingestion pipelines 
-- lots of batching and other fun optimizations (no c hot functions or optimized numpy matrix multiplications just yet)
-- aws lighthouse backend API server and https for remote usage
-- user to user matching via FAISS
+- aws lighthouse provided server to host backend n API's and https via Route 53 and nginx for remote usage
+- cluster to cluster similarity via FAISS (basically regaular similarity loop, but they filter out the ones that have no chance) and cluster scoring aggregation
 - some other stuff I likely forgot
 
-Currently working on (prioritized and will likely be done by 2/14):
+Currently working on (prioritized and will likely be done by 2/14, I add things as I finish them):
 - finding foundational bugs
 - normalizing user cluster time-weights
 - getting more user messages in messageVault for better low-dimensional proj.
@@ -53,8 +55,10 @@ To use the latest push online:
  - wait for two locked and loaded messages, the ML takes about a minute to load up
  - run "npm run dev" in /frontend directory
  - go to "localhost:3000" (or whatever port npm run dev finds available)
+- email me if any difficulties ggreat317@gmail.com
 
 # Author Note
 Test it out and tell me how to improve it.
-The old frontend is under another repo titled "murmur", if you want to see progress.
+The old frontend is under another repo titled "murmur", if you want to see progress. (Its not much since most the progress has been backend, so it only lacks the most important features)
 Usually busy with other stuff, you could probably tell from how frequent this is updated (started in July 2025 for reference), but this is a project I like working on in my free time.
+Again, email me for more information: ggreat317@gmail.com .
