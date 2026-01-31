@@ -2,9 +2,13 @@ import { useAuth } from '../../homepage/auth';
 import { MenuButton, Room, Setter} from './leftsidebar';
 import { User } from 'firebase/auth';
 import { ProfileRow } from '../rightsidebar/profiles';
+import { getUserInfo } from '../api/selfGet';
+import { useState, useEffect } from 'react';
 
 export function DefaultBar({setSidebar, directMessages, groupChats, user} : {setSidebar: Setter, directMessages:Room[],  groupChats:Room[], user: User}) {
   const { setRoom } = useAuth();
+	const [ bestMatch, setBestMatch ] = useState("");
+
 	const userName = user.displayName;
 
   const directRooms = directMessages.map(room => (
@@ -18,6 +22,16 @@ export function DefaultBar({setSidebar, directMessages, groupChats, user} : {set
 			<MenuButton className={room._id} set={setRoom} name={room.name} />
 		</div>
 	));
+
+	useEffect(()=>{
+		async function loadBestMatch(){
+			const data = await getUserInfo("bestMatch");
+			setBestMatch(data.bestMatch);
+		}
+		loadBestMatch()
+	}, [])
+
+
 	
 	return(
     <div className="sidebar slide">
@@ -34,7 +48,8 @@ export function DefaultBar({setSidebar, directMessages, groupChats, user} : {set
 				
 			</div>
 			<div className="bottom">
-				{userName && <ProfileRow userID={user.uid} userName={userName} self={true} ></ProfileRow>}
+				{ <ProfileRow userID={bestMatch} userName={"Best Match"} self={false} best={true}></ProfileRow>}
+				{userName && <ProfileRow userID={user.uid} userName={"Profile"} self={true} best={false} ></ProfileRow>}
 				<ActualMenuButton name={"Settings"} set={()=>setSidebar("settings")}></ActualMenuButton>
 			</div>
     </div>

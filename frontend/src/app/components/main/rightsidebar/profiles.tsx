@@ -63,13 +63,14 @@ export function Profiles({user, room} : {user : User, room : string}) {
           userID={u.userID}
           userName={u.userName}
           self={false}
+          best={false}
         />
       ))}
     </div>
   );
 }
 
-export function ProfileRow({ userID, userName, self }: {userID: string, userName: string, self: boolean}) {
+export function ProfileRow({ userID, userName, self, best }: {userID: string, userName: string, self: boolean, best: boolean}) {
 
   const [open, setOpen] = useState(false);
   const [points, setPoints] = useState<number[][]>([])
@@ -83,6 +84,7 @@ export function ProfileRow({ userID, userName, self }: {userID: string, userName
     setLoading(true);
     try{
       console.log("im trying to load the umap");
+      console.log(userID)
       const coords = self ? await loadSelfUMAP() : await loadOtherUMAP(userID)
       setPoints(coords);
       console.log("pass")
@@ -99,10 +101,10 @@ export function ProfileRow({ userID, userName, self }: {userID: string, userName
   }
 
   return (
-    <div className={`${self ? "menuProfile" : "profile"} ${open ? "open" : ""}`}>
-      {self ? 
+    <div className={`${self||best ? "menuProfile" : "profile"} ${open ? "open" : ""}`}>
+      {self||best ? 
         <button className="button" onClick={handleToggle}>
-            Profile
+            {userName}
         </button>
       :
         <button className="userinfo" onClick={handleToggle}>
