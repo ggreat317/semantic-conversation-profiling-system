@@ -1,17 +1,17 @@
-# semantic-conversation-user-profiling-and-recommendation-system
+# Semantic User Cluster Profiling and Recommendation System
 
 # Description
 Most Simple. An Overly Optimized Way to Find People to Talk To Online.
 
-Pretty Simple. An online chat application with front end, back end, and ML properties that presents you people who talk about the same things.
+Pretty Simple. An online chat application with front end, back end, and ML properties that consitently presents you people who talk about the same things.
 
 Kind Of Simple. An application that creates evolving user cluster profiles based on clustered message embeddings and promotes user interaction with similar cluster profiles.
 
-Little Less Simple. A user profiling and reccomendation system based on batch ingested embeddings, time-decayed clusters, aggregated cluster profiles, low-dimensionality projections, "de-embbeded" centroids, and cluster-cluster similarity, integrated though a fully deployed user messaging application, backed by authentication and utilizes three databases, in order to promote user interaction with people whose cluster profiles most resemble eachothers, e.g. they talk about the same stuff.
+Little Less Simple. A user profiling and recommendation system based on batch ingested embeddings, time-decayed evolving clusters, aggregated cluster profiles, low-dimensionality projections, "de-embbeded" centroids, and cluster-to-cluster similarity, integrated though a fully deployed user messaging application, backed by authentication and utilizes three databases (historic, fan-out, and "update"), in order to promote user interaction with people whose cluster profiles most resemble eachothers, e.g. they talk about the same stuff.
 
-Even Less Simple. Email me and I can break down how everything works and why it works that way (ggreat317@gmail.com).
+Even Less Simple. Email me and I can break down how everything works and why it works that way ( ggreat317@gmail.com ).
 
-Least Simple. Read through all code, research all buzzwords used in this read me, and research all libraries used.
+Least Simple. Read through all code, research all buzzwords used in this read me, and research all libraries used, then email me ( listed above ).
 
 # First Week of Feburary 2026 Updates
 
