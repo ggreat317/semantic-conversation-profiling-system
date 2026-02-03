@@ -1,9 +1,9 @@
 
-import { useAuth } from '../../homepage/auth';
-import { MenuButton, Room, Setter} from './leftsidebar';
+import { useAuth } from '../../utilities/auth';
+import { MenuButton, Room, Setter } from './leftsidebar';
 
-export function FriendsBar({setSidebar, friendMessages} : {setSidebar: Setter, friendMessages: Room[]}) {
-  
+export function FriendsBar({ setSidebar, friendMessages, open }: { open: boolean, setSidebar: Setter, friendMessages: Room[] }) {
+
   const { user } = useAuth();
 
   const { setRoom } = useAuth();
@@ -14,22 +14,22 @@ export function FriendsBar({setSidebar, friendMessages} : {setSidebar: Setter, f
       </div>
     );
   })
-  
+
   return (
-    <div className="sidebar">
+    <div className={open ? "leftsidebar open" : "leftsidebar"}>
       <div className="top">
-				<span className="text big">Friends</span>
-			</div>
-			<div className="top">
+        <span className="text big">Friends</span>
+      </div>
+      <div className="top">
         {chatRooms}
-			</div>
-			<div className=" bottom">
+      </div>
+      <div className=" bottom">
         <MenuButton
           className=""
           name="Exit Friends"
           set={() => setSidebar("")}
         />
-			</div>
+      </div>
     </div>
   );
 }

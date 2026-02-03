@@ -28,7 +28,7 @@
 
 .text-row {
   white-space: nowrap;
-  font-size: min(10vw,10vh);
+  font-size: min(10vw,10dvh);
   font-weight: bold;
   color: #fff;
   animation: textMove 12s linear infinite;

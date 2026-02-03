@@ -5,19 +5,19 @@ body{
 .floatPage{
   background-color: var(--border);
   box-shadow: 0 4px 32px rgba(0,0,0,0.4);
-  margin-top:20vh;
+  margin-top:20dvh;
   margin-left:20vw;
   border-radius: 10px;
   font-family: Monospace;
   font-weight: bold;
-  font-size: min(2vw,3vh);
+  font-size: min(2vw,3dvh);
   color: var(--text);
   display:flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
   align-content: space-around;
-  height: 60vh;
+  height: 60dvh;
   width: 60vw;
   gap: 0vw;
   padding:1%;
@@ -38,7 +38,7 @@ body{
 .titleCard{
   height:100%;
   width:100%;
-  font-size: min(10vw,10vh);;
+  font-size: min(10vw,10dvh);;
   white-space: nowrap;
   text-align: center;
 }
@@ -131,7 +131,7 @@ body{
 .metaname{
   position: relative;
   left: 5%;
-  top: 1.8vh;
+  top: 1.8dvh;
   font-size: 0.7em;
   font-weight:500;
   color:#fff;
@@ -154,17 +154,17 @@ body{
   }
 
   .signin-input{
-    font-size: 4vh;
+    font-size: 4dvh;
   }
 
   .nogoogle{
-    font-size:3vh;
+    font-size:3dvh;
   }
 
 }
 @media (max-aspect-ratio: 17/15){
   .floatPage{
-    margin-top:10vh;
+    margin-top:10dvh;
     margin-left:2vw;
     width:96vw;
     flex-direction: column;
@@ -189,13 +189,13 @@ body{
   }
 
   .nogoogle{
-    height: 5vh;
+    height: 5dvh;
     padding:min(5vw,3.5vh);
   }
 
   .metaname{
     left:5%;
-    top: 2vh;
+    top: 2dvh;
   }
 
   .infos{
@@ -211,7 +211,7 @@ body{
 
 @media (max-aspect-ratio: 12/16){
   .floatPage{
-    margin-top:10vh;
+    margin-top:10dvh;
     margin-left:2vw;
     width:96vw;
     flex-direction: column;
@@ -265,6 +265,6 @@ body{
   .metaname{
     font-size: 0.4em;
     left:5%;
-    top: 1.5vh;
+    top: 1.5dvh;
   }
 }

@@ -1,22 +1,39 @@
 
-.match{
-  width: 250px;
+.rightsidebar{
   background: var(--side);
   display: flex;
   flex-direction: column;
   padding: 16px;
-  height: 100vh;
-  color: #fff;
-  font-family: sans-serif;
-  flex:.3;
+  height: 100dvh;
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  flex: 0 0 17%;
+  min-width: 280px;
+  max-width: 420px;
 }
-/*
-@media (max-width:1000px){
-  .match{
-    display: none;
+
+@media (min-width: 1000px) {
+  .rightsidebar {
+    flex: 0 0 17%;
+    position: relative;
+    transform: none;
   }
 }
-*/
+
+@media (max-width: 999px) {
+  .rightsidebar {
+    position: fixed;
+    top: 6.7dvh;
+    height: 93.3dvh;
+    right: 0;
+    max-width: 30dvw;
+    transform: translateX(100%);
+  }
+
+  .rightsidebar.open {
+    transform: translateX(0);
+  }
+}
 
 .big{
   color:var(--text);
@@ -49,7 +66,7 @@
   display:flex;
   flex-direction: column;
   text-align: center;
-  min-height: 10vh;
+  min-height: 10dvh;
   width: 100%;
   margin-bottom: 10px;
   border-radius: 12px;
@@ -60,11 +77,11 @@
 }
 
 .profile.open{
-  min-height: 80vh;
+  min-height: 90dvh;
 }
 
 .pfp{
-  height: 5vh;
+  height: 5dvh;
   aspect-ratio: 1/1;
   border-radius: 50%;
   background: var(--send);
@@ -116,13 +133,13 @@
 }
 
 .umap{
-  min-height: 10vh;
-  max-height: 10vh;
+  min-height: 10dvh;
+  max-height: 10dvh;
   text-align: center;
 }
 
 .small{
-  font-size: min(2vh,2vw);
+  font-size: min(2dvh,2vw);
 }
 
 .reg{

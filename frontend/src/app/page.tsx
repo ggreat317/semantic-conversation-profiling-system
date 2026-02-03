@@ -1,12 +1,12 @@
 "use client"
 
-import { HomePage } from './components/homepage/homepage';
+import { HomePage } from './components/utilities/homepage';
 
 export default function Home() {
- // simple and clean :)
- // 
+    // simple and clean :)
+    // 
 
-  return (
-      <HomePage></HomePage>
-  );
+    return (
+        <HomePage></HomePage>
+    );
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { API_URL } from "../main/api/token";
+import { API_URL } from "../utilities/api/token";
 import { useState } from 'react';
 import { auth } from '../../config/firebase';
 import { signInWithCustomToken, fetchSignInMethodsForEmail } from 'firebase/auth';

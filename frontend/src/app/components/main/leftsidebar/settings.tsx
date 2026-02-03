@@ -5,7 +5,7 @@ import { MenuButton } from "./leftsidebar";
 
 type Setter = React.Dispatch<React.SetStateAction<string>>
 
-export function SettingBar({setSidebar} : {setSidebar: Setter}) {
+export function SettingBar({setSidebar, open }: { open: boolean, setSidebar: Setter}) {
 	const router = useRouter()
 	async function logOut(){
 		try {
@@ -18,7 +18,7 @@ export function SettingBar({setSidebar} : {setSidebar: Setter}) {
 	}
 
   return(
-    <div className="sidebar">
+    <div className={open ? "leftsidebar open" : "leftsidebar"}>
       <div className="top">
 				<span className="text big">Settings</span>
 			</div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { sendFriendRequest } from '../api/request';
-import { loadOtherUMAP, loadSelfUMAP } from '../api/profiles';
+import { sendFriendRequest } from '../../utilities/api/request';
+import { loadOtherUMAP, loadSelfUMAP } from '../../utilities/api/profiles';
 import ProfileUMAP from './profileUMAP';
 import { User } from 'firebase/auth';
 

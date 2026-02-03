@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { auth, db } from '../../../config/firebase';
-import { createMessage } from "../api/create.js";
+import { createMessage } from "../../utilities/api/create.js";
 
 export function ChatInput({room} : {room : string}) {
   const [text, setText] = useState('');

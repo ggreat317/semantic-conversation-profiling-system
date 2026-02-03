@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { updateCustom } from '../../api/selfUpdates.js'
+import { updateCustom } from '../../../utilities/api/selfUpdates.js'
 type Setter = React.Dispatch<React.SetStateAction<string>>
 
 
@@ -27,7 +27,7 @@ const DARK_THEME: Theme = {
   send: "#5865f2",
 };
 
-export function SliderBar({ setSidebar, custom, customTheme }: { setSidebar: Setter, custom: string, customTheme: Theme }) {
+export function SliderBar({ setSidebar, custom, customTheme, open }: { open: boolean, setSidebar: Setter, custom: string, customTheme: Theme }) {
 
   const [theme, setTheme] = useState<Theme>(customTheme);
 
@@ -41,7 +41,7 @@ export function SliderBar({ setSidebar, custom, customTheme }: { setSidebar: Set
   }
 
   return (
-    <div className="sidebar">
+    <div className={open ? "leftsidebar open" : "leftsidebar"}>
       <div className="top">
         <span className="text big">Customization</span>
       </div>

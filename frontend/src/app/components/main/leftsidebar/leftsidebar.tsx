@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
-import { loadRooms } from '../api/selfGet';
+import { loadRooms } from '../../utilities/api/selfGet';
 
 import { DefaultBar } from './default';
 import { SettingBar } from './settings';
@@ -46,7 +46,7 @@ export type Room = {
   }[]
 };
 
-export function LeftSidebar({ user } : {user: User}) {
+export function LeftSidebar({ user, open } : {user: User, open : boolean}) {
 
 	const [sidebar, setSidebar] = useState("");
 	const [custom, setCustom ] = useState("");
@@ -93,12 +93,12 @@ export function LeftSidebar({ user } : {user: User}) {
 
 	return (
 		<div>
-			{sidebar === "" && <DefaultBar setSidebar={setSidebar} directMessages={directMessages} groupChats={groupChats} user={user}></DefaultBar>}
-			{sidebar === "settings" && <SettingBar setSidebar={setSidebar}></SettingBar>}
-			{sidebar === "options" && <OptionBar setSidebar={setSidebar} setCustom={setCustom} setCustomTheme={setCustomTheme}></OptionBar>}
-			{sidebar === "sliders" && <SliderBar setSidebar={setSidebar} custom={custom} customTheme={customTheme}></SliderBar>}
-			{sidebar === "requests" && <RequestBar setSidebar={setSidebar}></RequestBar>}
-      {sidebar === "friends" && <FriendsBar setSidebar={setSidebar} friendMessages={friendMessages}></FriendsBar>}
+			{sidebar === "" && <DefaultBar open={open} setSidebar={setSidebar} directMessages={directMessages} groupChats={groupChats} user={user}></DefaultBar>}
+			{sidebar === "settings" && <SettingBar open={open} setSidebar={setSidebar}></SettingBar>}
+			{sidebar === "options" && <OptionBar open={open} setSidebar={setSidebar} setCustom={setCustom} setCustomTheme={setCustomTheme}></OptionBar>}
+			{sidebar === "sliders" && <SliderBar open={open} setSidebar={setSidebar} custom={custom} customTheme={customTheme}></SliderBar>}
+			{sidebar === "requests" && <RequestBar open={open} setSidebar={setSidebar}></RequestBar>}
+      {sidebar === "friends" && <FriendsBar open={open} setSidebar={setSidebar} friendMessages={friendMessages}></FriendsBar>}
 		</div>
 	);
 }

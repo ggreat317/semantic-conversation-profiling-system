@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic"
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false })
-import { useCss } from "../../homepage/useCss"
+import { useCss } from "../../utilities/useCss"
 
 export default function profileUMAP({ profile, self }) {
   const points = profile[0];

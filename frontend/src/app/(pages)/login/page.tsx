@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 
 import { LogIn } from '@/app/components/login/signin'
 import { CreateUser } from '@/app/components/login/createuser'
-import { useAuth } from '@/app/components/homepage/auth'
-import { Loading } from '@/app/components/homepage/loading'
+import { useAuth } from '@/app/components/utilities/auth'
+import { Loading } from '@/app/components/utilities/loading'
 
 import '@/app/css/signin.css'
 
@@ -18,14 +18,14 @@ export default function Login() {
   // const pathname = usePathname()
   const { user, loading } = useAuth();
   const [hydrated, setHydrated] = useState(false);
-  
+
   useEffect(() => {
     setHydrated(true);
     //if(pathname !== '/login'){
-     // router.replace('/login');
+    // router.replace('/login');
     //}
   }, [router]);
-  
+
 
   // if user is signed in it will go to main chat 
   useEffect(() => {

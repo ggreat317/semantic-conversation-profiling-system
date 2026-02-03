@@ -1,7 +1,7 @@
 'use client';
 
 
-import { useEffect, useState} from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import '@/app/css/main.css';
@@ -13,24 +13,25 @@ import { LeftSidebar } from '@/app/components/main/leftsidebar/leftsidebar';
 import '@/app/css/leftsidebar.css';
 
 import { RightSidebar } from '@/app/components/main/rightsidebar/rightsidebar';
-import '@/app/css/profiles.css';
+import '@/app/css/rightsidebar.css';
 
-import { Loading } from '@/app/components/homepage/loading';
+import { Loading } from '@/app/components/utilities/loading';
 
-import { useAuth } from '@/app/components/homepage/auth';
+import { useAuth } from '@/app/components/utilities/auth';
 
-import { getUserInfo } from '@/app/components/main/api/selfGet';
+import { getUserInfo } from '@/app/components/utilities/api/selfGet';
 
 export default function Main() {
 
   const router = useRouter();
   // const pathname = usePathname();
   const { user, room, loading } = useAuth();
-
   const [hydrated, setHydrated] = useState(false);
-  
+  const [leftOpen, setLeftOpen] = useState(false);
+  const [rightOpen, setRightOpen] = useState(false);
+
   useEffect(() => {
-   setHydrated(true);
+    setHydrated(true);
   }, [router]);
 
   useEffect(() => {
@@ -43,13 +44,14 @@ export default function Main() {
       }
     }
 
-    async function loadLastTheme(){
-      try{
+    async function loadLastTheme() {
+      try {
         const res = await getUserInfo(`customLast`);
         const theme = res?.[`customLast`] as Theme;
         Object.entries(theme).forEach(([key, value]) => {
-        document.documentElement.style.setProperty(`--${key}`, value)});
-      }catch{
+          document.documentElement.style.setProperty(`--${key}`, value)
+        });
+      } catch {
         console.log("Must be first time, no customs!");
       }
     }
@@ -61,11 +63,11 @@ export default function Main() {
   return (
     <div>
       {!loading && user && room &&
-        <div className="Murmur">
-          <LeftSidebar user={user}></LeftSidebar>
-          <Chat user={user} room={room}></Chat>
-          <RightSidebar user={user} room={room} ></RightSidebar>
-        </div>
+          <div className="Murmur">
+            <LeftSidebar user={user} open={leftOpen}></LeftSidebar>
+            <Chat user={user} room={room} setLeftOpen={setLeftOpen} setRightOpen={setRightOpen}></Chat>
+            <RightSidebar user={user} room={room} open={rightOpen} ></RightSidebar>
+          </div>
       }
       {loading && <Loading></Loading>}
     </div>

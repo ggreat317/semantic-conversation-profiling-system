@@ -1,15 +1,15 @@
-# User Cluster Profiling and Recommendation System 
+# Semantic User Profiling and Recommendation System 
 
 # Try It Yourself: https://murmurs.web.app
 
 # Description
 Most Simple. An Overly Optimized Way to Find People to Talk To Online.
 
-Pretty Simple. An online chat application with front end, back end, and ML properties that consitently presents you people who talk about the same things.
+Pretty Simple. An online chat application with front end, back end, and ML properties that consitently presents you with the most similar people who talk about the same stuff as you and the same way as you.
 
 Kind Of Simple. An application that creates evolving user cluster profiles based on clustered message embeddings and promotes user interaction with similar cluster profiles.
 
-Little Less Simple. A user profiling and recommendation system based on batch ingested embeddings, time-decayed evolving clusters, aggregated cluster profiles, low-dimensionality projections, "de-embbeded" centroids, and cluster-to-cluster similarity, integrated though a fully deployed user messaging application, backed by authentication and utilizes three databases (historic, fan-out, and "update"), in order to promote user interaction with people whose cluster profiles most resemble eachothers, e.g. they talk about the same stuff.
+Little Less Simple. A user profiling and recommendation system that can capture theoretically infinite virtual personas, comprised of unique cluster profiles, to be made and matched based on batch ingested embeddings, time-decayed evolving clusters, aggregated cluster profiles, low-dimensionality projections, "de-embbeded" centroids, and cluster-to-cluster similarity, and integrated though a fully deployed user messaging application, backed by authentication and utilizes three databases (historic, fan-out, and "update"), in order to promote user interaction with people whose cluster profiles most resemble eachothers, e.g. they talk about similar stuff and talk in similar ways.
 
 Even Less Simple. Email me and I can break down how everything works and why it works that way ( ggreat317@gmail.com ).
 
@@ -19,8 +19,8 @@ Least Simple. Read through all code, research all buzzwords used in this read me
 
 Already completed:
 - many bug fixes
-- most of react frontend hosted on firebase
-- pipelined embeddings, cluster creation, and low dimensionality proj.
+- most of react frontend hosted on firebase and mobile capability
+- pipelined embeddings, cluster creation, low dimensionality proj., and "translated" topic labels/sims
 - data wiring/schemas in mongo, firebase firestore, and firebase RTDB
 - deploying dockerized central expressjs api's and ml pipelines on fast api and hosting frontend on public firebase 
 - time-decayed centroid aggregation (like weighing the importance of clusters), cluster maintenance (since clusters evolve), and "ramp up" batch ingestion pipelines 
@@ -52,18 +52,6 @@ To use the latest push online:
  - tell your friends, and their friends/family, to join you
  - be sure to spread the word, so I can getter better data to work with!
  - maybe dont do the two things above just yet, give it a month or two
-
-# Local Usage
- To run the latest push locally:
- - clone the repo
- - get your own mongo URI and firebase server SDK
- - change the frontend api url in /frontend/src/app/components/main/api/token to "http://localhost:5000" 
- - change port stuff at bottom of /api/backend/index.js
- - run "docker compose up --build" in /api directory
- - wait for two locked and loaded messages, the ML takes about a minute to load up
- - run "npm run dev" in /frontend directory
- - go to "localhost:3000" (or whatever port npm run dev finds available)
-- email me if any difficulties ggreat317@gmail.com
 
 # Author Note
 Test it out and tell me how to improve it.

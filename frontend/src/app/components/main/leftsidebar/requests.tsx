@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../homepage/auth';
-import { getFriendRequests } from '../api/request';
-import { acceptFriendRequest } from '../api/request';
+import { useAuth } from '../../utilities/auth';
+import { getFriendRequests } from '../../utilities/api/request';
+import { acceptFriendRequest } from '../../utilities/api/request';
 
 type Setter = React.Dispatch<React.SetStateAction<string>>
 
@@ -18,7 +18,7 @@ type PublicUser = {
   time: Date;
 };
 
-export function RequestBar({setSidebar} : {setSidebar: Setter}) {
+export function RequestBar({ setSidebar , open }: { open: boolean,  setSidebar: Setter }) {
   const [users, setUsers] = useState<PublicUser[]>([]);
   const { user, loading } = useAuth();
 
@@ -28,13 +28,13 @@ export function RequestBar({setSidebar} : {setSidebar: Setter}) {
       return;
     }
 
-    async function loadRequests(){
+    async function loadRequests() {
       const data: Record<string, PublicData> = await getFriendRequests();
-      if(!data){
+      if (!data) {
         return setUsers([])
       }
       const list = Object.values(data)
-        .map((u : PublicData) => ({
+        .map((u: PublicData) => ({
           userID: u.from,
           time: new Date(u.time),
           userName: u.fromName
@@ -48,37 +48,37 @@ export function RequestBar({setSidebar} : {setSidebar: Setter}) {
   }, [user, loading]);
 
   return (
-    <div className="sidebar">
+    <div className={open ? "leftsidebar open" : "leftsidebar"}>
       <div className="top">
-				<span className="text big">Requests</span>
-			</div>
-			<div className="tabs">
+        <span className="text big">Requests</span>
+      </div>
+      <div className="tabs">
         {users.map((u) => (
           <div key={u.userID}>
-             <ProfileRow
+            <ProfileRow
               userID={u.userID}
               userName={u.userName}
             />
           </div>
         ))}
-			</div>
-			<div className=" bottom">
+      </div>
+      <div className=" bottom">
         <MenuButton
           name="Exit Requests"
           set={() => setSidebar("")}
         />
-			</div>
+      </div>
     </div>
   );
 }
 
-function ProfileRow({ userID, userName }: {userID: string; userName: string;}) {
+function ProfileRow({ userID, userName }: { userID: string; userName: string; }) {
 
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  if(!userName){ return; }
+  if (!userName) { return; }
   async function loadProfile() {
     if (profile || loading) return;
 
@@ -97,7 +97,7 @@ function ProfileRow({ userID, userName }: {userID: string; userName: string;}) {
   function handleToggle() {
     setOpen((o) => !o);
     if (!open) loadProfile();
-    
+
   }
 
 
@@ -156,31 +156,31 @@ function AcceptRejectButtons({ recipientID }: { recipientID: string }) {
   return (
     <div className="flex gap-2">
       {status !== "reject" &&
-      <button
-        className="button accept"
-        disabled={processing || status=="accept"}
-        onClick={handleAccept}
-      >
-        {status == "" ? "Accept" : "Accepted"}
-      </button>}
+        <button
+          className="button accept"
+          disabled={processing || status == "accept"}
+          onClick={handleAccept}
+        >
+          {status == "" ? "Accept" : "Accepted"}
+        </button>}
 
-      {status !== "accept" && 
-      <button
-        className="button reject"
-        disabled={processing || status=="reject"}
-        onClick={handleReject}
-      >
-        {status == "" ? "Reject" : "Rejected"}
-      </button>}
+      {status !== "accept" &&
+        <button
+          className="button reject"
+          disabled={processing || status == "reject"}
+          onClick={handleReject}
+        >
+          {status == "" ? "Reject" : "Rejected"}
+        </button>}
     </div>
   );
 }
 
-function MenuButton({name, set} : {name : string, set: Setter}){
-	return(
-		<button 
-			className="button menu-button"
-			onClick={() => set(name)}
-		>{name}</button> 
-	);
+function MenuButton({ name, set }: { name: string, set: Setter }) {
+  return (
+    <button
+      className="button menu-button"
+      onClick={() => set(name)}
+    >{name}</button>
+  );
 }

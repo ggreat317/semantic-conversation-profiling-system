@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { db } from "../../../config/firebase";
 import { collection, query, orderBy, startAfter, onSnapshot, Timestamp } from "firebase/firestore";
-import { useAuth } from '../../homepage/auth';
-import { loadOlderMessages, normalizeDate } from '../api/get.js';
+import { useAuth } from '../../utilities/auth';
+import { loadOlderMessages, normalizeDate } from '../../utilities/api/get.js';
 import { User } from "firebase/auth";
 
-export function ChatScreen({user, room} : {user : User, room : string}) {
+export function ChatScreen({ user, room }: { user: User, room: string }) {
 
   type FirestoreMessage = {
     text: string;
@@ -19,28 +19,28 @@ export function ChatScreen({user, room} : {user : User, room : string}) {
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const bottomRef = useRef<HTMLDivElement | null>(null);
-  const topRef =  useRef<HTMLDivElement | null>(null);
+  const topRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (isAtBottom){
+    if (isAtBottom) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isAtBottom]);
 
   useEffect(() => {
-    if (!room){
+    if (!room) {
       return setMessages([]);
     };
 
     let active = true;
     async function loadInitial() {
-      try{
+      try {
         const initial = await loadOlderMessages(room, new Date(), 50);
         if (!active) return;
-      
+
         setMessages(initial);
         setHistoryLoaded(true);
-      }catch(err){
+      } catch (err) {
         console.log(err)
       }
     }
@@ -56,15 +56,15 @@ export function ChatScreen({user, room} : {user : User, room : string}) {
     if (!historyLoaded || !db || !room) return;
     let q;
     const latestTime = messages[messages.length - 1]?.time;
-    
-    if(latestTime){
+
+    if (latestTime) {
       const latestTimestamp = Timestamp.fromDate(new Date(latestTime))
       q = query(
         collection(db, "rooms", room, "messages"),
         orderBy("time", "asc"),
         startAfter(latestTimestamp)
       );
-    }else{
+    } else {
       q = query(
         collection(db, "rooms", room, "messages"),
         orderBy("time", "asc"),
@@ -74,7 +74,7 @@ export function ChatScreen({user, room} : {user : User, room : string}) {
     const unsubscribe = onSnapshot(q, snapshot => {
       const liveMessages = snapshot.docs.map(doc => {
         const data = doc.data();
-        return{
+        return {
           text: data.text,
           time: data.time.toDate(),
           ownerID: data.ownerID,
@@ -93,7 +93,7 @@ export function ChatScreen({user, room} : {user : User, room : string}) {
   }, [room, db, historyLoaded])
 
   const chatMessage = messages.map((message) => {
-    const time = normalizeDate(message.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+    const time = normalizeDate(message.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     return (
       <div key={message.id}>
         <Message user={message.userName} text={message.text} time={time}></Message>
@@ -104,7 +104,7 @@ export function ChatScreen({user, room} : {user : User, room : string}) {
   const handleScroll = async () => {
     if (!topRef.current) return;
     const current = topRef.current
-    if (current.scrollTop === 0){
+    if (current.scrollTop === 0) {
       const oldestMessage = messages[0];
       if (!oldestMessage) return;
 
@@ -121,11 +121,11 @@ export function ChatScreen({user, room} : {user : User, room : string}) {
   }
 
   return (
-    <div 
+    <div
       className="main-chat-screen"
-      ref={topRef} 
+      ref={topRef}
       onScroll={handleScroll}
-      >
+    >
       {user && <div>{chatMessage}</div>}
       <div ref={bottomRef} />
     </div>

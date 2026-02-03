@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react';
-import { getUserInfo } from '../../api/selfGet';
-import { updateCustom } from '../../api/selfUpdates';
+import { getUserInfo } from '../../../utilities/api/selfGet';
+import { updateCustom } from '../../../utilities/api/selfUpdates';
 type Setter = React.Dispatch<React.SetStateAction<string>>
 type themeSetter = React.Dispatch<React.SetStateAction<Theme>>
 
@@ -45,7 +45,7 @@ const LIGHT_THEME: Theme = {
 };
 
 
-export function OptionBar({ setSidebar, setCustom, setCustomTheme }: { setSidebar: Setter, setCustom: Setter, setCustomTheme: themeSetter }) {
+export function OptionBar({ setSidebar, setCustom, setCustomTheme, open }: { open: boolean, setSidebar: Setter, setCustom: Setter, setCustomTheme: themeSetter }) {
 	const [isDark, setIsDark] = useState(true);
 
 	const handleToggleTheme = () => {
@@ -71,7 +71,7 @@ export function OptionBar({ setSidebar, setCustom, setCustomTheme }: { setSideba
 	}
 
 	return (
-		<div className="sidebar">
+		<div className={open ? "leftsidebar open" : "leftsidebar"}>
 			<div className="top">
 				<span className="text big">Customization</span>
 			</div>

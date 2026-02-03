@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import "../../css/signin.css";
 import "../../css/leftsidebar.css";
 import "../../css/main.css";
-import "../../css/profiles.css";
+import "../../css/rightsidebar.css";
 import "../../css/chat.css";
 
 import { Loading } from "./loading";
