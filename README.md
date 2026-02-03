@@ -7,7 +7,7 @@ Most Simple. An Overly Optimized Way to Find People to Talk To Online.
 
 Pretty Simple. An online chat application with front end, back end, and ML properties that consitently presents you with the most similar people who talk about the same stuff as you and the same way as you.
 
-Kind Of Simple. An application that creates evolving user cluster profiles based on clustered message embeddings and promotes user interaction with similar cluster profiles.
+Kind Of Simple. An application that creates evolving user cluster profiles based on batch ingested message embeddings then promotes user interaction with similar users.
 
 Little Less Simple. A user profiling and recommendation system that can capture theoretically infinite virtual personas, comprised of unique cluster profiles, to be made and matched based on batch ingested embeddings, time-decayed evolving clusters, aggregated cluster profiles, low-dimensionality projections, "de-embbeded" centroids, and cluster-to-cluster similarity, and integrated though a fully deployed user messaging application, backed by authentication and utilizes three databases (historic, fan-out, and "update"), in order to promote user interaction with people whose cluster profiles most resemble eachothers, e.g. they talk about similar stuff and talk in similar ways.
 
@@ -17,7 +17,7 @@ Least Simple. Read through all code, research all buzzwords used in this read me
 
 # First Week of Feburary 2026 Updates
 
-Already completed:
+Already completed (not in chronological order):
 - many bug fixes
 - most of react frontend hosted on firebase and mobile capability
 - pipelined embeddings, cluster creation, low dimensionality proj., and "translated" topic labels/sims
@@ -29,7 +29,7 @@ Already completed:
 - "reversing" embedding cluster centroids for genre names, sim scores, flagging clusters for better UI abstraction, this replaces the basic cluster names ({Cluster 0, Cluster 1, ...., Cluster n})
 - some other stuff I likely forgot
 
-Currently working on (prioritized and will likely be done by 2/14, I add things as I finish them):
+Currently working on (prioritized and will likely be done by 2/14. I remove things as I finish them or add things if multiple steps are needed):
 - finding foundational bugs
 - normalizing user cluster time-weights
 - getting more user messages in messageVault for better low-dimensional proj.

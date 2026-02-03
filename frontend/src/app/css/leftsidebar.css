@@ -24,10 +24,10 @@
 @media (max-width: 999px) {
   .leftsidebar {
     position: fixed;
-    top: 6.7dvh;
-    height: 93.3dvh;
+    top: 4.5dvh;
+    height: 95.5dvh;
     left: 0;
-    max-width: 30dvw;
+    min-width: 50vw;
     transform: translateX(-100%);
   }
 

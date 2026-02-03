@@ -18,6 +18,7 @@
 
 .mobile-header {
   position: relative;
+  height: 6dvh;
   top: 0;
   left: 0;
   right: 0;
