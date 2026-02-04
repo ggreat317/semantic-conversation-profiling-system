@@ -25,8 +25,12 @@ export function DefaultBar({ setSidebar, directMessages, groupChats, user, open 
 
 	useEffect(() => {
 		async function loadBestMatch() {
-			const data = await getUserInfo("bestMatch");
-			setBestMatch(data.bestMatch);
+			try{
+				const data = await getUserInfo("bestMatch");
+				setBestMatch(data.bestMatch);
+			} catch {
+				console.log("No Current Best Match")
+			}
 		}
 		loadBestMatch()
 	}, [])

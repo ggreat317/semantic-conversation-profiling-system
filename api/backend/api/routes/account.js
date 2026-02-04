@@ -6,10 +6,9 @@ import rateLimit from "express-rate-limit";
 
 const router = express.Router();
 
-// Optional: simple rate limiter to prevent abuse
 const limiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 5, // max 5 requests per IP per window
+  windowMs: 60 * 1000 * 5, // 5 minutes
+  max: 1, // max requests per IP per window
   message: "Too many accounts created from this IP, please try later."
 });
 
@@ -79,8 +78,13 @@ router.post("/", limiter, async (req, res) => {
 
     await admin.database().ref(`rooms/general`).update({
       [`members/users/${userRecord.uid}/userName`]: displayName,
-      [`metadata/lastAccessed`]: creationTime
+      [`metadata/lastAccessed`]: creationTime,
+      [`type`]: "G",
     });
+
+    await admin.database().ref(`users/${userID}/access`).set({
+      general: true
+    })
 
     console.log("successfully updated RTDB")
 

@@ -6,13 +6,13 @@ import { User } from 'firebase/auth';
 
 import { getDatabase, ref, onValue } from 'firebase/database';
 
-type PublicUserRTDBMap = {
+export type PublicUserRTDBMap = {
   [userID : string]: {
     userName: string;
   }
 };
 
-type PublicUser = {
+export type PublicUser = {
   userID: string;
   userName: string;
 };
@@ -87,9 +87,7 @@ export function ProfileRow({ userID, userName, self, best }: {userID: string, us
       console.log(userID)
       const profile = self ? await loadSelfUMAP() : await loadOtherUMAP(userID)
       setProfile(profile);
-      console.log("pass")
     }catch{
-      console.log("fail")
       setLoading(false);
     }
     setLoading(false);

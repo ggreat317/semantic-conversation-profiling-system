@@ -28,7 +28,7 @@ export function ChatScreen({ user, room }: { user: User, room: string }) {
   }, [messages, isAtBottom]);
 
   useEffect(() => {
-    if (!room) {
+    if (!room || !user) {
       return setMessages([]);
     };
 

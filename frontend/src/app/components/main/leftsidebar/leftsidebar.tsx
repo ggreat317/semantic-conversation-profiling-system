@@ -11,6 +11,8 @@ import { SliderBar } from './customization/sliders'
 import { RequestBar } from './requests';
 import { FriendsBar } from './friends';
 
+import { getDatabase, ref, onValue } from 'firebase/database';
+
 const SELECTION = [
   "text", "border", "side", "button", "hover",
   "header", "chat", "time", "foot", "input", "send"
@@ -48,30 +50,37 @@ export type Room = {
 
 export function LeftSidebar({ user, open } : {user: User, open : boolean}) {
 
+  const db = getDatabase();
+
 	const [sidebar, setSidebar] = useState("");
 	const [custom, setCustom ] = useState("");
 	const [customTheme, setCustomTheme] = useState<Theme>(DARK_THEME)
-
   const [ rooms, setRooms ] = useState<Room[]>([]);
   
   useEffect(() => {
+    // old and inefficient
+    // calls the actual db once and the db doesnt do listeners
     if (!user) return;
 
-    let active = true;
-
-    async function loadInitial() {
+    async function loadUserRooms() {
       try {
         const initial = await loadRooms();
-        if (!active) return;
         setRooms(initial);
       } catch (err) {
         console.error(err);
       }
     }
 
-    loadInitial();
+    // gets user access from rtdb (this is cross-validated on the backend so editing this result doesnt do anything lol)
+    const userAccessRef = ref(db, `users/${user.uid}`);
+
+    // grabs data at reference
+    const userAccessUnsubscribe = onValue(userAccessRef, snapshot => {
+      loadUserRooms();
+    });
+
     return () => {
-      active = false;
+      userAccessUnsubscribe();
     };
   }, [user]);
 
@@ -98,7 +107,7 @@ export function LeftSidebar({ user, open } : {user: User, open : boolean}) {
 			{sidebar === "options" && <OptionBar open={open} setSidebar={setSidebar} setCustom={setCustom} setCustomTheme={setCustomTheme}></OptionBar>}
 			{sidebar === "sliders" && <SliderBar open={open} setSidebar={setSidebar} custom={custom} customTheme={customTheme}></SliderBar>}
 			{sidebar === "requests" && <RequestBar open={open} setSidebar={setSidebar}></RequestBar>}
-      {sidebar === "friends" && <FriendsBar open={open} setSidebar={setSidebar} friendMessages={friendMessages}></FriendsBar>}
+      {sidebar === "friends" && <FriendsBar open={open} setSidebar={setSidebar} friendMessages={friendMessages} userID={user.uid}></FriendsBar>}
 		</div>
 	);
 }

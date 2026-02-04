@@ -167,8 +167,14 @@ async function acceptFriendRequest(userID, friendID, userName) {
   await admin.database().ref(`rooms/${newRoom}`).update({
     [`members/users/${userID}/userName`]: userName,
     [`members/users/${friendID}/userName`]: request.fromName,
+    [`type`]: "F",
     [`metadata/lastAccessed`]: roomCreationTime
-  })
+  });
+
+  await admin.database().ref(`users`).update({
+    [`${userID}/access/${newRoom}`]: true,
+    [`${friendID}/access/${newRoom}`]: true,
+  });
 
   await db.collection("users").updateOne(
     { uid: userID },
